@@ -1,7 +1,9 @@
 # 🧪 Projeto Integrador – Tanques (PI-Tanques)
 
 **Curso:** Engenharia de Controle e Automação — UNESP Sorocaba  
+
 **Disciplinas:** Sistemas Computacionais (SCOM) e Laboratório de Sistemas de Controle I (LCON I) 
+
 **Fase atual:** Estrutura inicial e simulação de dados  
 
 ---
