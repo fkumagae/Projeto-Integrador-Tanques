@@ -66,8 +66,6 @@ Projeto-Integrador-Tanques/
 ├── test_api.http # requisições REST para testar a API
 └── logs/.gitkeep
 
-yaml
-Copiar código
 
 ---
 
@@ -82,20 +80,19 @@ Copiar código
 
 ---
 
-## 🔗 Fluxo de dados inicial
-
-```mermaid
-flowchart LR
-  ESP32[ESP32 (firmware/simulador)] --> API[API Backend]
-  API --> DB[(MySQL)]
-  API --> FRONT[Dashboard Web]
-  FRONT -->|Requisições REST| API
 👥 Equipe
 Integrante	Função
-[Nome 1]	Firmware e sensores
-[Nome 2]	Backend e banco de dados
-[Nome 3]	Frontend e interface
-[Nome 4]	Documentação e integração
+1. Beatriz Martuscelli da Silva Prado	Firmware e sensores
+2. Felipe Pellegrini Kumagae  Firmware e sensores
+3. Rafael Utsunomya Machado  Firmware e sensores
+4. Ana Clara Godoy Ensides	Backend e banco de dados
+5. Hebert de Oliveira Brito  Backend e banco de dados
+6. Amanda Segura Mendes de Oliveira Frontend e interface
+6.Maysa Gabriela Lucas Izaias Frontend e interface
+7.Guilherme Yuiti de Queiroz Barbosa Frontend e interface
+	
+
+
 
 🚀 Próximas etapas
 Definir formato final dos dados JSON (shared_data/dados_simulados.json);
@@ -115,7 +112,3 @@ O projeto encontra-se na fase de organização de diretórios, definição da ar
 📄 Licença
 Projeto desenvolvido exclusivamente para fins acadêmicos, sem fins comerciais.
 
-yaml
-Copiar código
-
----
