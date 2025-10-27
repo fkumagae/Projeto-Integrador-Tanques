@@ -1,0 +1,17 @@
+# .gitignore gerado automaticamente pelo assistente
+# Ignorar arquivos do macOS
+.DS_Store
+
+# Node
+node_modules/
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Env
+.env
+
+# IDEs
+.vscode/
+.idea/
