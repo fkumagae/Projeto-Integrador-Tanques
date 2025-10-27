@@ -80,17 +80,18 @@ Projeto-Integrador-Tanques/
 
 ---
 
-👥 Equipe
-Integrante	Função
-1. Beatriz Martuscelli da Silva Prado	Firmware e sensores
-2. Felipe Pellegrini Kumagae  Firmware e sensores
-3. Rafael Utsunomya Machado  Firmware e sensores
-4. Ana Clara Godoy Ensides	Backend e banco de dados
-5. Hebert de Oliveira Brito  Backend e banco de dados
-6. Amanda Segura Mendes de Oliveira Frontend e interface
-6.Maysa Gabriela Lucas Izaias Frontend e interface
-7.Guilherme Yuiti de Queiroz Barbosa Frontend e interface
-	
+## 👥 Equipe
+
+| Nº | Integrante | Função |
+|----|-------------|--------|
+| 1 | Beatriz Martuscelli da Silva Prado | Firmware e sensores |
+| 2 | Felipe Pellegrini Kumagae | Firmware e sensores |
+| 3 | Rafael Utsunomya Machado | Firmware e sensores |
+| 4 | Ana Clara Godoy Ensides | Backend e banco de dados |
+| 5 | Hebert de Oliveira Brito | Backend e banco de dados |
+| 6 | Amanda Segura Mendes de Oliveira | Frontend e interface |
+| 7 | Maysa Gabriela Lucas Izaias | Frontend e interface |
+| 8 | Guilherme Yuiti de Queiroz Barbosa | Frontend e interface |
 
 
 
