@@ -31,42 +31,42 @@ O projeto é composto por três camadas principais:
 
 ---
 
-## 🧱 Estrutura do Repositório
+## Estrutura do Repositório
 
+```
 Projeto-Integrador-Tanques/
 │
-├── firmware/ # Código do ESP32 e simuladores simples
-│ ├── main.ino # (esqueleto do firmware real)
-│ └── simulador.py # script que envia dados simulados p/ API
+├── firmware/                    # Código do ESP32 e simuladores simples
+│   ├── main.ino                  # (esqueleto do firmware real)
+│   └── simulador.py              # script que envia dados simulados p/ API
 │
-├── backend/ # API e integração MySQL
-│ ├── app.py # pode começar em Flask, FastAPI ou PHP
-│ ├── requirements.txt # dependências mínimas
-│ └── README.md
+├── backend/                     # API e integração MySQL
+│   ├── app.py                    # pode começar em Flask, FastAPI ou PHP
+│   ├── requirements.txt          # dependências mínimas
+│   └── README.md
 │
-├── database/ # Modelagem e scripts SQL
-│ ├── schema.sql # CREATE TABLES básicas
-│ ├── seed.sql # dados simulados
-│ └── diagramas/
-│ └── er.mmd # modelo entidade-relacionamento
+├── database/                    # Modelagem e scripts SQL
+│   ├── schema.sql                # CREATE TABLES básicas
+│   ├── seed.sql                  # dados simulados
+│   └── diagramas/
+│       └── er.mmd                # modelo entidade-relacionamento
 │
-├── frontend/ # Dashboard web
-│ ├── index.html # protótipo inicial
-│ ├── script.js # leitura e visualização básica de dados
-│ └── style.css
+├── frontend/                    # Dashboard web
+│   ├── index.html                # protótipo inicial
+│   ├── script.js                 # leitura e visualização básica de dados
+│   └── style.css
 │
-├── shared_data/ # Dados simulados comuns (ESP ↔ API ↔ Front)
-│ └── dados_simulados.json
+├── shared_data/                 # Dados simulados comuns (ESP ↔ API ↔ Front)
+│   └── dados_simulados.json
 │
-├── docs/ # Documentação do projeto
-│ ├── README.md # resumo do escopo, equipe e divisão de tarefas
-│ └── arquitetura_geral.mmd # diagrama simples de blocos
+├── docs/                        # Documentação do projeto
+│   ├── README.md                 # resumo do escopo, equipe e divisão de tarefas
+│   └── arquitetura_geral.mmd     # diagrama simples de blocos
 │
-└── test/ # Scripts e logs de testes
-├── test_api.http # requisições REST para testar a API
-└── logs/.gitkeep
-
-
+└── test/                        # Scripts e logs de testes
+    ├── test_api.http             # requisições REST para testar a API
+    └── logs/.gitkeep
+```
 ---
 
 ## ⚙️ Tecnologias previstas
