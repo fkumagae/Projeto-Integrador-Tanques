@@ -1,33 +1,22 @@
-// Trecho para incluir em ~/.node-red/settings.js
-
+//Exemplo de como alterar o node-red/settings.js
+//Trecho relevante do settings.js do Node-RED usado no projeto
+// topo do settings.js
 const session = require('express-session');
 const FileStore = require('session-file-store')(session);
-const sessionMiddleware = session({
-  store: new FileStore({ path: './.node-red/sessions' }),
-  secret: process.env.SESSION_SECRET || 'altere-esta-chave',
-  resave: false,
-  saveUninitialized: false,
-  cookie: { maxAge: 1000 * 60 * 60 } // 1h
-});
 
 module.exports = {
-  // ...
+  httpNodeMiddleware: [
+    session({
+      store: new FileStore({ path: __dirname + '/sessions' }),
+      secret: '$2a$10$l2AhGYCdmnatorCZ/zki0.IMINS2azQoAzJqYSeS6k8GQtJHbHzEu',
+      resave: false,
+      saveUninitialized: false,
+      cookie: { secure: false, maxAge: 24*60*60*1000 } // 1 dia
+    })
+  ],
+  // (para usar bcrypt em function nodes)
   functionGlobalContext: {
     bcrypt: require('bcrypt'),
-    cryptojs: require('crypto-js'),
-    apiKey: process.env.API_KEY || 'minha-chave-secreta-123'
+    cryptojs: require('crypto-js')
   },
-
-  httpNodeMiddleware: function (req, res, next) {
-    sessionMiddleware(req, res, function () {
-      if (!req.session) {
-        return res.status(500).send('Sessao indisponivel');
-      }
-      // Protege endpoints sensiveis, mas permite APIs com x-api-key
-      if (!req.session.user && !req.path.startsWith('/api')) {
-        return res.redirect('/login');
-      }
-      next();
-    });
-  }
 };
