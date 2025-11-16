@@ -1,0 +1,2730 @@
+[
+    {
+        "id": "f7652259b01f9ec1",
+        "type": "tab",
+        "label": "API ESP32 - Tanques (v2)",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "5f292076e3bba690",
+        "type": "http in",
+        "z": "f7652259b01f9ec1",
+        "name": "GET /health",
+        "url": "/health",
+        "method": "get",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 210,
+        "y": 40,
+        "wires": [
+            [
+                "e7b3ff351c22cf24"
+            ]
+        ]
+    },
+    {
+        "id": "e7b3ff351c22cf24",
+        "type": "function",
+        "z": "f7652259b01f9ec1",
+        "name": "Status OK",
+        "func": "msg.statusCode = 200;\nmsg.payload = { status: \"ok\", server_time: new Date().toISOString() };\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 390,
+        "y": 40,
+        "wires": [
+            [
+                "9a1682c67612cc35"
+            ]
+        ]
+    },
+    {
+        "id": "53cda43af96db0e3",
+        "type": "http response",
+        "z": "f7652259b01f9ec1",
+        "name": "HTTP Resposta",
+        "statusCode": "",
+        "headers": {},
+        "x": 1040,
+        "y": 1020,
+        "wires": []
+    },
+    {
+        "id": "480becc496e0fdba",
+        "type": "http in",
+        "z": "f7652259b01f9ec1",
+        "name": "POST /api/medicoes",
+        "url": "/api/medicoes",
+        "method": "post",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 110,
+        "y": 200,
+        "wires": [
+            [
+                "8a31737e04a48e6e"
+            ]
+        ]
+    },
+    {
+        "id": "9a3a3dfc89d78525",
+        "type": "json",
+        "z": "f7652259b01f9ec1",
+        "name": "Parse JSON",
+        "property": "payload",
+        "action": "obj",
+        "pretty": false,
+        "x": 170,
+        "y": 100,
+        "wires": [
+            [
+                "5372db332424d0e8"
+            ]
+        ]
+    },
+    {
+        "id": "2d26a554d5210ec8",
+        "type": "function",
+        "z": "f7652259b01f9ec1",
+        "name": "Resposta OK (POST)",
+        "func": "let inseridos = 0;\n\n// Soma resultados do MySQL\nif (Array.isArray(msg.payload)) {\n    for (let r of msg.payload) {\n        if (r && typeof r.affectedRows !== \"undefined\") {\n            inseridos += r.affectedRows;\n        } else if (r && r._count) {\n            inseridos += r._count;\n        }\n    }\n} else if (msg.payload && typeof msg.payload.affectedRows !== \"undefined\") {\n    inseridos = msg.payload.affectedRows;\n} else if (msg.payload && msg.payload._count) {\n    inseridos = msg.payload._count;\n}\n\nmsg.payload = {\n    ok: true,\n    inseridos: inseridos\n};\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1300,
+        "y": 220,
+        "wires": [
+            [
+                "6527450a262feca1"
+            ]
+        ]
+    },
+    {
+        "id": "827fd8cc9ef85327",
+        "type": "catch",
+        "z": "f7652259b01f9ec1",
+        "name": "CATCH MySQL errors",
+        "scope": [
+            "mysql_main",
+            "d27ea620e6a8a80a",
+            "a8fdbe41f33f9b46"
+        ],
+        "uncaught": false,
+        "x": 170,
+        "y": 300,
+        "wires": [
+            [
+                "5a18528ae62ca79f"
+            ]
+        ]
+    },
+    {
+        "id": "5a18528ae62ca79f",
+        "type": "function",
+        "z": "f7652259b01f9ec1",
+        "name": "Tratar erro MySQL → 500",
+        "func": "const err = msg.error || {};\nconst detail = (err.message || err.toString || '').toString();\nmsg.statusCode = 500;\nmsg.payload = { ok:false, erro: \"Falha no banco de dados\", detalhe: detail };\nnode.status({fill:\"red\", shape:\"ring\", text: detail.slice(0,60)});\n\n// Depois de montar o 500, também prepara um log\nconst ip = (msg.req && msg.req.connection && msg.req.connection.remoteAddress) || 'desconhecido';\n\nconst logMsg = {\n    payload: {\n        tipo: \"ERRO\",\n        desc: `Erro MySQL: ${detail.slice(0,180)}`,\n        ip: ip\n    }\n};\n\n// Envia um clone para o link out\nnode.send([msg, logMsg]); // saída 1: resposta; saída 2: log\n",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 490,
+        "y": 300,
+        "wires": [
+            [
+                "3c889485b6af854c",
+                "021f99e8568e1a35"
+            ]
+        ]
+    },
+    {
+        "id": "626e7b56053dec43",
+        "type": "http in",
+        "z": "f7652259b01f9ec1",
+        "name": "GET /api/medicoes/atual",
+        "url": "/api/medicoes/atual",
+        "method": "get",
+        "upload": false,
+        "skipBodyParsing": false,
+        "swaggerDoc": "",
+        "x": 190,
+        "y": 440,
+        "wires": [
+            [
+                "afdb890fddf035d7"
+            ]
+        ]
+    },
+    {
+        "id": "afdb890fddf035d7",
+        "type": "function",
+        "z": "f7652259b01f9ec1",
+        "name": "Query Últimos por tanque",
+        "func": "/* Retorna último registro por tanque */\nmsg.topic = `\nSELECT \n    m.tanque_id, \n    m.value_encrypted AS nivel, \n    m.ts\nFROM medicoes m\nJOIN (\n    SELECT tanque_id, MAX(ts) ts\n    FROM medicoes \n    GROUP BY tanque_id\n) x\nON x.tanque_id = m.tanque_id AND x.ts = m.ts\nORDER BY m.tanque_id;\n`;\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 430,
+        "y": 440,
+        "wires": [
+            [
+                "d27ea620e6a8a80a"
+            ]
+        ]
+    },
+    {
+        "id": "c165df7f6f2eab9f",
+        "type": "http in",
+        "z": "f7652259b01f9ec1",
+        "name": "GET /api/medicoes/historico",
+        "url": "/api/medicoes/historico",
+        "method": "get",
+        "upload": false,
+        "skipBodyParsing": false,
+        "swaggerDoc": "",
+        "x": 210,
+        "y": 500,
+        "wires": [
+            [
+                "02eef21f2546df30"
+            ]
+        ]
+    },
+    {
+        "id": "02eef21f2546df30",
+        "type": "function",
+        "z": "f7652259b01f9ec1",
+        "name": "Montar Query Histórico (sanitizada)",
+        "func": "const q = (msg.req && msg.req.query) ? msg.req.query : {};\nconst tanque = parseInt(q.tanque || 0, 10);\n\n// Default de/até se não vier nada\nlet de  = (q.de  || '2000-01-01 00:00:00').toString();\nlet ate = (q.ate || '2100-01-01 00:00:00').toString();\n\n// Valida tanque\nif (!Number.isInteger(tanque) || tanque <= 0) {\n    msg.statusCode = 400;\n    msg.payload = { ok: false, erro: 'Parâmetro \"tanque\" é obrigatório (inteiro > 0).' };\n    return [null, msg];   // sai pela saída 2 -> http response\n}\n\n// Sanitização simples: só dígitos, -, :, espaço\nconst safe = s => s.replace(/[^0-9:\\-\\s]/g, '');\n\nde  = safe(de).slice(0, 19);\nate = safe(ate).slice(0, 19);\n\n// Monta SQL\nmsg.topic = `\n    SELECT \n        tanque_id,\n        value_encrypted AS nivel, \n        ts\n    FROM medicoes\n    WHERE tanque_id = ${tanque}\n      AND ts BETWEEN '${de}' AND '${ate}'\n    ORDER BY ts\n\n`;\n\nreturn [msg, null];   // saída 1 -> MySQL\n",
+        "outputs": 2,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 480,
+        "y": 500,
+        "wires": [
+            [
+                "a8fdbe41f33f9b46"
+            ],
+            [
+                "ceefa446a31fd002"
+            ]
+        ]
+    },
+    {
+        "id": "5372db332424d0e8",
+        "type": "split",
+        "z": "f7652259b01f9ec1",
+        "name": "",
+        "splt": "\\n",
+        "spltType": "str",
+        "arraySplt": 1,
+        "arraySpltType": "len",
+        "stream": false,
+        "addname": "",
+        "property": "payload",
+        "x": 330,
+        "y": 100,
+        "wires": [
+            [
+                "3d2bf1971607cce4",
+                "de276758cea36b9e"
+            ]
+        ]
+    },
+    {
+        "id": "3d2bf1971607cce4",
+        "type": "function",
+        "z": "f7652259b01f9ec1",
+        "name": "function Praparar",
+        "func": "// 1. Pega os dados originais do Python\nvar dados = msg.payload;\n\n// 2. Prepara um \"pacote\" para o teletransporte\n//    AQUI USAMOS 'dados.timestamp' (o nome certo)\nvar dadosParaSalvar = {\n    tanque: dados.tanque,\n    ts: dados.ts\n};\n\n// 3. Salva o pacote na memória, usando um ID único da mensagem\nflow.set(msg._msgid, dadosParaSalvar);\n\n// 4. Isola SÓ o nível para o nó 'encrypt' e CONVERTE PARA STRING\nmsg.payload = String(dados.nivel);\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 510,
+        "y": 140,
+        "wires": [
+            [
+                "8ef41ccea1a36432",
+                "867899ca7b33b591"
+            ]
+        ]
+    },
+    {
+        "id": "9a85da9ac5a17448",
+        "type": "function",
+        "z": "f7652259b01f9ec1",
+        "name": "function Montar SQL",
+        "func": "// 1. Pega o valor que o 'encrypt' cuspiu\nvar valorCriptografado = msg.payload;\n\n// 2. Pega os dados originais de volta da memória (o \"teletransporte\")\nvar dados = flow.get(msg._msgid); \n\n// 3. Monta o SQL\nmsg.topic = \"INSERT INTO medicoes (tanque_id, value_encrypted, ts) VALUES (?, ?, ?)\";\n\n// 4. Prepara os dados na ordem certa\nmsg.payload = [ dados.tanque, valorCriptografado, dados.ts ];\n\n// 5. Limpa a memória para não acumular lixo\nflow.set(msg._msgid, undefined); \n\nmsg.queryType = \"insert\";  // só pra identificação\nmsg._count = 1; // 1 inserção esperada (por tanque)\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 700,
+        "y": 220,
+        "wires": [
+            [
+                "488304e7cc5b6953"
+            ]
+        ]
+    },
+    {
+        "id": "428c8370e765aab9",
+        "type": "join",
+        "z": "f7652259b01f9ec1",
+        "name": "",
+        "mode": "custom",
+        "build": "string",
+        "property": "payload",
+        "propertyType": "msg",
+        "key": "topic",
+        "joiner": "\\n",
+        "joinerType": "str",
+        "useparts": false,
+        "accumulate": false,
+        "timeout": "",
+        "count": "3",
+        "reduceRight": false,
+        "reduceExp": "",
+        "reduceInit": "",
+        "reduceInitType": "",
+        "reduceFixup": "",
+        "x": 1110,
+        "y": 220,
+        "wires": [
+            [
+                "2d26a554d5210ec8"
+            ]
+        ]
+    },
+    {
+        "id": "c8c86402cba15750",
+        "type": "http in",
+        "z": "f7652259b01f9ec1",
+        "name": "POST Enviar Comando",
+        "url": "/api/send",
+        "method": "post",
+        "upload": false,
+        "skipBodyParsing": false,
+        "swaggerDoc": "",
+        "x": 160,
+        "y": 560,
+        "wires": [
+            [
+                "15f17d570ddf1733"
+            ]
+        ]
+    },
+    {
+        "id": "c5e676a6b43ed2c5",
+        "type": "function",
+        "z": "f7652259b01f9ec1",
+        "name": "Montar SQL Comando",
+        "func": "// msg.payload veio do formulário JSON: { comando: \"setpoint\", valor: \"40\" }\nconst cmd = msg.payload || {};\nconst nome_comando = String(cmd.comando || '').trim();\n\n// Corrige vírgula para ponto e converte para Number\nconst valor_numerico = parseFloat(String(cmd.valor || '0').replace(',', '.'));\n\n// Pega o usuário logado da sessão\nconst sess = msg.req && msg.req.session && msg.req.session.user;\nconst userId = sess && sess.id ? sess.id : null;\n\nif (!userId) {\n    msg.statusCode = 401;\n    msg.payload = { ok:false, erro:\"Não autenticado\" };\n    return msg;\n}\n\nmsg.topic = \"INSERT INTO commands (command_name, value, status, user_id) VALUES (?, ?, 'pending', ?)\";\nmsg.payload = [nome_comando, valor_numerico, userId];\n\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 540,
+        "y": 560,
+        "wires": [
+            [
+                "b60b0110faf9a92c",
+                "c7dbf4bee5c498ae",
+                "f4b5af7225d6b1ca"
+            ]
+        ]
+    },
+    {
+        "id": "52dffb0083d1b740",
+        "type": "http response",
+        "z": "f7652259b01f9ec1",
+        "name": "",
+        "statusCode": "",
+        "headers": {},
+        "x": 990,
+        "y": 620,
+        "wires": []
+    },
+    {
+        "id": "3bf966831d538cd8",
+        "type": "http in",
+        "z": "f7652259b01f9ec1",
+        "name": "GET Pegar Comando",
+        "url": "/api/commands",
+        "method": "get",
+        "upload": false,
+        "skipBodyParsing": false,
+        "swaggerDoc": "",
+        "x": 100,
+        "y": 680,
+        "wires": [
+            [
+                "e2c8ccc814a6c4be"
+            ]
+        ]
+    },
+    {
+        "id": "19abc00468bd8ef5",
+        "type": "function",
+        "z": "f7652259b01f9ec1",
+        "name": "Buscar Comando Pendente",
+        "func": "// Pega o comando mais antigo que ainda não foi enviado\nmsg.topic = \"SELECT * FROM commands WHERE status = 'pending' ORDER BY created_at ASC LIMIT 1\";\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 500,
+        "y": 680,
+        "wires": [
+            [
+                "ff52e585a8934a78"
+            ]
+        ]
+    },
+    {
+        "id": "0e81f84e77cac4a6",
+        "type": "switch",
+        "z": "f7652259b01f9ec1",
+        "name": "",
+        "property": "payload",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "nempty"
+            },
+            {
+                "t": "empty"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 2,
+        "x": 910,
+        "y": 680,
+        "wires": [
+            [
+                "cb0e9b3940faa28b"
+            ],
+            [
+                "b89db86761ab0bf4"
+            ]
+        ]
+    },
+    {
+        "id": "cb0e9b3940faa28b",
+        "type": "function",
+        "z": "f7652259b01f9ec1",
+        "name": "Marcar ENVIADO",
+        "func": "// O comando encontrado está em msg.payload[0]\nvar comando = msg.payload[0];\n\n// 1. Prepara o comando SQL para marcar como 'sent'\nmsg.topic = \"UPDATE commands SET status = 'sent' WHERE id = ?\";\nmsg.payload = [comando.id]; // Usa o ID do comando\n\n// 2. Guarda o comando para enviar ao ESP em um \"bolso\" lateral\nmsg.comandoParaESP = comando;\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1090,
+        "y": 660,
+        "wires": [
+            [
+                "5047631d6089dd7a"
+            ]
+        ]
+    },
+    {
+        "id": "421cb2322e49f1e7",
+        "type": "function",
+        "z": "f7652259b01f9ec1",
+        "name": "Formatar Resposta do ESP",
+        "func": "// Pega o comando que guardamos no \"bolso\"\nmsg.payload = msg.comandoParaESP;\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1520,
+        "y": 660,
+        "wires": [
+            [
+                "77140556f83849d4"
+            ]
+        ]
+    },
+    {
+        "id": "b89db86761ab0bf4",
+        "type": "http response",
+        "z": "f7652259b01f9ec1",
+        "name": "",
+        "statusCode": "",
+        "headers": {},
+        "x": 1090,
+        "y": 700,
+        "wires": []
+    },
+    {
+        "id": "77140556f83849d4",
+        "type": "http response",
+        "z": "f7652259b01f9ec1",
+        "name": "",
+        "statusCode": "",
+        "headers": {},
+        "x": 1710,
+        "y": 660,
+        "wires": []
+    },
+    {
+        "id": "8e697b900efdadc8",
+        "type": "link in",
+        "z": "f7652259b01f9ec1",
+        "name": "SALVAR LOG",
+        "links": [
+            "3402713b46debeb5",
+            "33f1b9c752aa2da3",
+            "84e99011e86676ad",
+            "eec7557f65735e01",
+            "fcc1aaadaf2b36ad",
+            "5523c08e38c1de39",
+            "65fb11976e3b4c99",
+            "c827a5c1d756d66e"
+        ],
+        "x": 65,
+        "y": 760,
+        "wires": [
+            [
+                "8dedc02602c3d7d5"
+            ]
+        ]
+    },
+    {
+        "id": "b084abcf98c3f941",
+        "type": "function",
+        "z": "f7652259b01f9ec1",
+        "name": "Montar SQL Log",
+        "func": "// msg.payload deve ser um objeto como:\n// { tipo: \"INFO\", desc: \"Dados recebidos\", ip: \"127.0.0.1\" }\n\nvar log = msg.payload;\n\nmsg.topic = \"INSERT INTO logs (event_type, description, ip_address) VALUES (?, ?, ?)\";\nmsg.payload = [log.tipo, log.desc, log.ip];\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 500,
+        "y": 760,
+        "wires": [
+            [
+                "0ff6295f5fdca5a0"
+            ]
+        ]
+    },
+    {
+        "id": "8a31737e04a48e6e",
+        "type": "function",
+        "z": "f7652259b01f9ec1",
+        "name": "Verificar API Key",
+        "func": "// Esta é sua senha secreta. O ESP deve enviar isso.\nconst CHAVE_SECRETA = 'minha-chave-secreta-123';\n\n// Pega a chave que o ESP enviou no 'header'\nvar chaveRecebida = msg.req.headers['x-api-key'];\n\nif (chaveRecebida === CHAVE_SECRETA) {\n    // SUCESSO! Prepara uma mensagem de log\n    var logMsg = {\n        payload: {\n            tipo: \"INFO\",\n            desc: \"Recebimento de dados do ESP OK.\",\n            ip: msg.req.connection.remoteAddress\n        }\n    };\n    // Envia o log E continua o fluxo\n    return [msg, logMsg];\n} else {\n    // FALHA! Prepara uma mensagem de log\n    var logErro = {\n        payload: {\n            tipo: \"ERRO\",\n            desc: \"Falha de API Key no POST /api/medicoes.\",\n            ip: msg.req.connection.remoteAddress\n        }\n    };\n    // Envia o log E PARA o fluxo\n    return [null, logErro];\n}",
+        "outputs": 2,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 310,
+        "y": 200,
+        "wires": [
+            [
+                "9a3a3dfc89d78525"
+            ],
+            [
+                "3402713b46debeb5"
+            ]
+        ]
+    },
+    {
+        "id": "3402713b46debeb5",
+        "type": "link out",
+        "z": "f7652259b01f9ec1",
+        "name": "link out 1",
+        "mode": "link",
+        "links": [
+            "8e697b900efdadc8"
+        ],
+        "x": 445,
+        "y": 260,
+        "wires": []
+    },
+    {
+        "id": "e2c8ccc814a6c4be",
+        "type": "function",
+        "z": "f7652259b01f9ec1",
+        "name": "Verificar API Key",
+        "func": "// Esta é sua senha secreta. O ESP deve enviar isso.\nconst CHAVE_SECRETA = 'minha-chave-secreta-123';\n\n// Pega a chave que o ESP enviou no 'header'\nvar chaveRecebida = msg.req.headers['x-api-key'];\n\nif (chaveRecebida === CHAVE_SECRETA) {\n    // SUCESSO! Prepara uma mensagem de log\n    var logMsg = {\n        payload: {\n            tipo: \"INFO\",\n            desc: \"Recebimento de dados do ESP OK.\",\n            ip: msg.req.connection.remoteAddress\n        }\n    };\n    // Envia o log E continua o fluxo\n    return [msg, logMsg];\n} else {\n    // FALHA! Prepara uma mensagem de log\n    var logErro = {\n        payload: {\n            tipo: \"ERRO\",\n            desc: \"Falha de API Key no POST /api/medicoes.\",\n            ip: msg.req.connection.remoteAddress\n        }\n    };\n    // Envia o log E PARA o fluxo\n    return [null, logErro];\n}",
+        "outputs": 2,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 290,
+        "y": 680,
+        "wires": [
+            [
+                "19abc00468bd8ef5"
+            ],
+            [
+                "33f1b9c752aa2da3"
+            ]
+        ]
+    },
+    {
+        "id": "33f1b9c752aa2da3",
+        "type": "link out",
+        "z": "f7652259b01f9ec1",
+        "name": "link out 2",
+        "mode": "link",
+        "links": [
+            "8e697b900efdadc8"
+        ],
+        "x": 395,
+        "y": 620,
+        "wires": []
+    },
+    {
+        "id": "8ef41ccea1a36432",
+        "type": "debug",
+        "z": "f7652259b01f9ec1",
+        "name": "debug após Preparar",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 760,
+        "y": 120,
+        "wires": []
+    },
+    {
+        "id": "de276758cea36b9e",
+        "type": "debug",
+        "z": "f7652259b01f9ec1",
+        "name": "debug 1",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 500,
+        "y": 100,
+        "wires": []
+    },
+    {
+        "id": "e563dc9721601184",
+        "type": "http in",
+        "z": "f7652259b01f9ec1",
+        "name": "GET (Dados que irão para o Dasboard, descripto)",
+        "url": "/api/data/latest",
+        "method": "get",
+        "upload": false,
+        "skipBodyParsing": false,
+        "swaggerDoc": "",
+        "x": 200,
+        "y": 1420,
+        "wires": [
+            [
+                "f33dd585d51a5c6e"
+            ]
+        ]
+    },
+    {
+        "id": "f33dd585d51a5c6e",
+        "type": "function",
+        "z": "f7652259b01f9ec1",
+        "name": "Buscar Últimas Medições",
+        "func": "// Pega as 3 últimas medições salvas no banco\nmsg.topic = \"SELECT * FROM medicoes ORDER BY id DESC LIMIT 3\";\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 510,
+        "y": 1420,
+        "wires": [
+            [
+                "232ece86ce5bfb8d"
+            ]
+        ]
+    },
+    {
+        "id": "f3375821c8f349bf",
+        "type": "split",
+        "z": "f7652259b01f9ec1",
+        "name": "",
+        "splt": "\\n",
+        "spltType": "str",
+        "arraySplt": 1,
+        "arraySpltType": "len",
+        "stream": false,
+        "addname": "",
+        "property": "payload",
+        "x": 350,
+        "y": 1460,
+        "wires": [
+            [
+                "38bcb46dc07ab869"
+            ]
+        ]
+    },
+    {
+        "id": "38bcb46dc07ab869",
+        "type": "function",
+        "z": "f7652259b01f9ec1",
+        "name": "Preparar p/ Decrypt",
+        "func": "// msg.payload contém o objeto da linha do MySQL\n// Ex: { id: 1, tanque_id: 2, value_encrypted: 'U2FsdGVkX1...', ts: '...' }\n\n// 1. FAZEMOS O BACKUP de todos os dados em uma nova propriedade\nmsg.dados_originais = msg.payload;\n\n// 2. ISOLAMOS apenas o valor que queremos descriptografar\nmsg.payload = msg.payload.value_encrypted;\n\n// O nó [decrypt] receberá SOMENTE o texto criptografado,\n// mas o msg manterá a propriedade 'dados_originais' intacta.\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 510,
+        "y": 1460,
+        "wires": [
+            [
+                "c9aaf24dc491a0fa"
+            ]
+        ]
+    },
+    {
+        "id": "50ece66f82fe9ef0",
+        "type": "function",
+        "z": "f7652259b01f9ec1",
+        "name": "Remontar Dados Limpos",
+        "func": "// 1. Pegamos o resultado da descriptografia\nvar dado_limpo = msg.payload;\n\n// 2. Pegamos o nosso backup\nvar dados_antigos = msg.dados_originais;\n\n// 3. Montamos o novo msg.payload limpo para o frontend\n// (Atenção: ajuste os nomes das propriedades 'tanque' e 'timestamp'\n// para corresponder ao que seu frontend espera)\n\n// --- Cenário A: Se você criptografou SÓ o NÚMERO (ex: 34.5) ---\nmsg.payload = {\n    tanque: dados_antigos.tanque_id,\n    nivel: dado_limpo, \n    timestamp: dados_antigos.ts\n};\n\n/*\n// --- Cenário B: Se você criptografou o OBJETO INTEIRO (ex: {\"nivel\": 34.5}) ---\nmsg.payload = {\n    tanque: dados_antigos.tanque_id,\n    nivel: dado_limpo.nivel, // <-- note a diferença\n    timestamp: dados_antigos.ts\n};\n*/\n\n// O nó [junta 3] receberá este objeto limpo.\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 850,
+        "y": 1460,
+        "wires": [
+            [
+                "488c1e073b05f46d"
+            ]
+        ]
+    },
+    {
+        "id": "488c1e073b05f46d",
+        "type": "join",
+        "z": "f7652259b01f9ec1",
+        "name": "",
+        "mode": "custom",
+        "build": "array",
+        "property": "payload",
+        "propertyType": "msg",
+        "key": "topic",
+        "joiner": "\\n",
+        "joinerType": "str",
+        "useparts": false,
+        "accumulate": false,
+        "timeout": "",
+        "count": "3",
+        "reduceRight": false,
+        "reduceExp": "",
+        "reduceInit": "",
+        "reduceInitType": "num",
+        "reduceFixup": "",
+        "x": 1030,
+        "y": 1460,
+        "wires": [
+            [
+                "97f04ff3cd25f75d"
+            ]
+        ]
+    },
+    {
+        "id": "97f04ff3cd25f75d",
+        "type": "http response",
+        "z": "f7652259b01f9ec1",
+        "name": "",
+        "statusCode": "",
+        "headers": {},
+        "x": 1150,
+        "y": 1460,
+        "wires": []
+    },
+    {
+        "id": "43f73017d0b1584a",
+        "type": "http in",
+        "z": "f7652259b01f9ec1",
+        "name": "GET /dashboard/medicoes",
+        "url": "/dashboard/medicoes",
+        "method": "get",
+        "upload": false,
+        "skipBodyParsing": false,
+        "swaggerDoc": "",
+        "x": 130,
+        "y": 1320,
+        "wires": [
+            [
+                "3e21fc224df16250"
+            ]
+        ]
+    },
+    {
+        "id": "94e9e0611fa29c7d",
+        "type": "template",
+        "z": "f7652259b01f9ec1",
+        "name": "",
+        "field": "payload",
+        "fieldType": "msg",
+        "format": "html",
+        "syntax": "mustache",
+        "template": "<!DOCTYPE html>\n<html lang=\"pt-br\">\n\n<head>\n    <meta charset=\"UTF-B\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Dashboard SCOM</title>\n    <style>\n        body {\n            font-family: sans-serif;\n            margin: 20px;\n            background: #f4f4f4;\n        }\n\n        .container {\n            max-width: 600px;\n            margin: auto;\n            padding: 20px;\n            background: #fff;\n            border-radius: 8px;\n            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);\n        }\n\n        h2 {\n            color: #333;\n        }\n\n        input {\n            width: 100px;\n            padding: 8px;\n        }\n\n        button {\n            padding: 8px 12px;\n            background: #007bff;\n            color: white;\n            border: none;\n            cursor: pointer;\n        }\n\n        button:hover {\n            background: #0056b3;\n        }\n\n        #status {\n            font-style: italic;\n            color: #666;\n        }\n\n        pre {\n            background: #eee;\n            padding: 10px;\n            border-radius: 4px;\n        }\n    </style>\n</head>\n\n<body>\n    <div class=\"container\">\n        <h2>Enviar Comando (Setpoint)</h2>\n        <form id=\"commandForm\">\n            <label>Novo Setpoint:</label>\n            <input type=\"number\" id=\"valorSetpoint\" value=\"25.5\" step=\"0.1\">\n            <button type=\"submit\">Enviar</button>\n            <div id=\"status\"></div>\n        </form>\n\n        <hr>\n\n        <h2>Últimos Dados Recebidos</h2>\n        <pre id=\"latest-data\">Carregando...</pre>\n    </div>\n\n    <script>\n        const form = document.getElementById('commandForm');\n        const statusDiv = document.getElementById('status');\n        const dataView = document.getElementById('latest-data');\n\n        // --- 1. Lógica para Enviar Comando ---\n        form.addEventListener('submit', async (e) => {\n            e.preventDefault(); // Impede o recarregamento da página\n\n            let valor = document.getElementById('valorSetpoint').value;\n            statusDiv.textContent = 'Enviando...';\n\n            try {\n                const response = await fetch('/api/send', {\n                    method: 'POST',\n                    headers: {'Content-Type': 'application/json'},\n                    // Prepara o JSON como o seu backend espera (Passo 4)\n                    body: JSON.stringify({ comando: 'setpoint', valor: valor })\n                });\n\n                if (response.ok) {\n                    statusDiv.textContent = `Comando (${valor}) enviado com sucesso!`;\n                } else {\n                    statusDiv.textContent = 'Falha ao enviar comando.';\n                }\n            } catch (err) {\n                statusDiv.textContent = 'Erro de conexão.';\n            }\n        });\n\n        // --- 2. Lógica para Buscar Dados ---\n        async function buscarDados() {\n            try {\n                // Chama a API que você criou no Passo 8\n                const response = await fetch('/api/data/latest');\n                const data = await response.json();\n\n                // Formata o JSON para exibição bonita\n                dataView.textContent = JSON.stringify(data, null, 2);\n\n            } catch (err) {\n                dataView.textContent = 'Erro ao carregar dados...';\n            }\n        }\n\n        // Roda a função de buscar dados agora e depois a cada 5 segundos\n        buscarDados();\n        setInterval(buscarDados, 5000);\n    </script>\n</body>\n\n</html>",
+        "output": "str",
+        "x": 580,
+        "y": 1320,
+        "wires": [
+            [
+                "3b7c0a2cee6801c5"
+            ]
+        ]
+    },
+    {
+        "id": "3b7c0a2cee6801c5",
+        "type": "http response",
+        "z": "f7652259b01f9ec1",
+        "name": "",
+        "statusCode": "",
+        "headers": {},
+        "x": 750,
+        "y": 1320,
+        "wires": []
+    },
+    {
+        "id": "12508da38ddea376",
+        "type": "inject",
+        "z": "f7652259b01f9ec1",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "adm123",
+        "payloadType": "str",
+        "x": 100,
+        "y": 1520,
+        "wires": [
+            [
+                "b3248566008d66d0"
+            ]
+        ]
+    },
+    {
+        "id": "58b53fc4cd0a7878",
+        "type": "debug",
+        "z": "f7652259b01f9ec1",
+        "name": "debug 3",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 700,
+        "y": 1520,
+        "wires": []
+    },
+    {
+        "id": "79a259b050c0788b",
+        "type": "function",
+        "z": "f7652259b01f9ec1",
+        "name": "function 2",
+        "func": "msg.hash = msg.payload;\nmsg.payload = \"adm123\";\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 380,
+        "y": 1520,
+        "wires": [
+            [
+                "4bfe8ce69386ad8a"
+            ]
+        ]
+    },
+    {
+        "id": "6dbb216d8ec92397",
+        "type": "switch",
+        "z": "f7652259b01f9ec1",
+        "name": "Usuário Encontrado?",
+        "property": "msg.payload.length",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "gt",
+                "v": "0",
+                "vt": "num"
+            },
+            {
+                "t": "else"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 2,
+        "x": 760,
+        "y": 1660,
+        "wires": [
+            [
+                "6d3e0780d9b2811e"
+            ],
+            [
+                "457af7ed8d2508e5"
+            ]
+        ]
+    },
+    {
+        "id": "73fe344d5050f638",
+        "type": "http in",
+        "z": "f7652259b01f9ec1",
+        "name": "GET login",
+        "url": "/login",
+        "method": "get",
+        "upload": false,
+        "skipBodyParsing": false,
+        "swaggerDoc": "",
+        "x": 80,
+        "y": 1640,
+        "wires": [
+            [
+                "b31a2f839546f7ac"
+            ]
+        ]
+    },
+    {
+        "id": "b31a2f839546f7ac",
+        "type": "template",
+        "z": "f7652259b01f9ec1",
+        "name": "Página de Login HTML",
+        "field": "payload",
+        "fieldType": "msg",
+        "format": "html",
+        "syntax": "mustache",
+        "template": "<!DOCTYPE html>\n<html lang=\"pt-br\">\n<head>\n    <meta charset=\"UTF-R\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Login - Sistema de Tanques</title>\n    <style>\n        body { font-family: Arial, sans-serif; display: grid; place-items: center; min-height: 100vh; background-color: #f4f4f4; }\n        form { background: #fff; border: 1px solid #ccc; padding: 25px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }\n        div { margin-bottom: 15px; }\n        label { display: block; margin-bottom: 5px; font-weight: bold; }\n        input[type=\"text\"], input[type=\"password\"] { width: 300px; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }\n        button { width: 100%; padding: 10px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }\n        button:hover { background-color: #0056b3; }\n        .error { color: red; font-weight: bold; }\n    </style>\n</head>\n<body>\n    <form action=\"/login\" method=\"POST\">\n        <h2>Login do Sistema</h2>\n        {{#payload.error}}\n            <p class=\"error\">{{payload.error}}</p>\n        {{/payload.error}}\n        <div>\n            <label for=\"username\">Usuário:</label>\n            <input type=\"text\" id=\"username\" name=\"username\" required>\n        </div>\n        <div>\n            <label for=\"password\">Senha:</label>\n            <input type=\"password\" id=\"password\" name=\"password\" required>\n        </div>\n        <button type-\"submit\">Entrar</button>\n    </form>\n</body>\n</html>",
+        "output": "str",
+        "x": 260,
+        "y": 1620,
+        "wires": [
+            [
+                "68de704b81d61559"
+            ]
+        ]
+    },
+    {
+        "id": "68de704b81d61559",
+        "type": "http response",
+        "z": "f7652259b01f9ec1",
+        "name": "",
+        "statusCode": "",
+        "headers": {},
+        "x": 430,
+        "y": 1620,
+        "wires": []
+    },
+    {
+        "id": "ec13e5afcde9c5a7",
+        "type": "http in",
+        "z": "f7652259b01f9ec1",
+        "name": "POST /login",
+        "url": "/login",
+        "method": "post",
+        "upload": false,
+        "skipBodyParsing": false,
+        "swaggerDoc": "",
+        "x": 90,
+        "y": 1700,
+        "wires": [
+            [
+                "92c6100a139e3807"
+            ]
+        ]
+    },
+    {
+        "id": "92c6100a139e3807",
+        "type": "function",
+        "z": "f7652259b01f9ec1",
+        "name": "Montar SQL Busca (Usuario",
+        "func": "// O formulário envia { username: \"...\", password: \"...\" }\nvar formData = msg.payload;\n\n// 1. Guarda a senha digitada\nmsg.senhaDigitada = formData.password;\n\n// 2. Limpa o username\nvar usernameLimpo = String(formData.username || \"\").trim();\n\n// 3. Query de login\n//  - pega só as colunas que interessam\n//  - se existir mais de um 'gui', pega SEMPRE o mais novo (maior id)\nmsg.topic = \"SELECT id, username, password_hash, role \" +\n            \"FROM users \" +\n            \"WHERE TRIM(username) = ? \" +\n            \"ORDER BY id DESC \" +\n            \"LIMIT 1\";\n\n// 4. Parâmetros\nmsg.payload = [usernameLimpo];\n\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 300,
+        "y": 1660,
+        "wires": [
+            [
+                "752ed041c15e74bd"
+            ]
+        ]
+    },
+    {
+        "id": "457af7ed8d2508e5",
+        "type": "change",
+        "z": "f7652259b01f9ec1",
+        "name": "Define Erro:Usuario Invalido",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "{ \"error\": \"Usuário ou senha inválida.\" }",
+                "tot": "json"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 920,
+        "y": 1580,
+        "wires": [
+            [
+                "b31a2f839546f7ac",
+                "da03e2c5d78dfd99"
+            ]
+        ]
+    },
+    {
+        "id": "b65d74aff748a388",
+        "type": "function",
+        "z": "f7652259b01f9ec1",
+        "name": "Salvar Usuário na Sessão",
+        "func": "// msg.payload[0] contém o usuário vindo do SELECT\nvar user = msg.payload[0];\n\n// Segurança: nunca carregar o hash na sessão\ndelete msg.senhaDigitada;\ndelete user.password_hash;\n\n// Confere se temos sessão (middleware express-session)\nif (msg.req && msg.req.session) {\n\n    // NORMALIZA o role: tira espaços e põe em minúsculo\n    const role = String(user.role || '').trim().toLowerCase();\n\n    // Salva só os campos que vamos usar\n    msg.req.session.user = {\n        id: user.id,\n        username: user.username,\n        role: role   // sempre 'admin' ou 'user'\n    };\n\n    // (debug opcional)\n    node.warn(\"Usuário logado na sessão:\");\n    node.warn(msg.req.session.user);\n} else {\n    node.warn(\"ATENÇÃO: msg.req.session não existe!\");\n}\n\n// Redireciona para o dashboard inicial\nmsg.statusCode = 302;\nmsg.headers = { \"Location\": \"/dashboard\" };\nmsg.payload = {};\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1150,
+        "y": 1720,
+        "wires": [
+            [
+                "d824f4265db1361a",
+                "cfc5e4f1f11a5874"
+            ]
+        ]
+    },
+    {
+        "id": "d824f4265db1361a",
+        "type": "http response",
+        "z": "f7652259b01f9ec1",
+        "name": "Redirecionar p/ Dashboard",
+        "statusCode": "",
+        "headers": {},
+        "x": 1400,
+        "y": 1700,
+        "wires": []
+    },
+    {
+        "id": "6d3e0780d9b2811e",
+        "type": "function",
+        "z": "f7652259b01f9ec1",
+        "name": "function 1",
+        "func": "node.warn(\"Senha digitada: \" + msg.senhaDigitada);\nnode.warn(\"Hash vindo do banco: \" + msg.payload[0].password_hash);\n\n// Garantir que os campos vão certinho para o bcrypt\nmsg.password = String(msg.senhaDigitada || msg.payload.senha || msg.payload.password).trim();\n\n// Pega o hash do banco\nvar hashFromDB = msg.payload[0].password_hash;\n\n// Converte de forma segura (caso seja um Buffer)\nmsg.hash = (Buffer.isBuffer(hashFromDB) ? hashFromDB.toString('utf-8') : String(hashFromDB)).trim();\n\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 760,
+        "y": 1720,
+        "wires": [
+            [
+                "dc757d6541b52d55"
+            ]
+        ]
+    },
+    {
+        "id": "d27ea620e6a8a80a",
+        "type": "mysql",
+        "z": "f7652259b01f9ec1",
+        "mydb": "cfg_mysql_local",
+        "name": "MySQL_Localhost",
+        "x": 670,
+        "y": 440,
+        "wires": [
+            [
+                "08069d7643c6205f",
+                "ceefa446a31fd002"
+            ]
+        ]
+    },
+    {
+        "id": "a8fdbe41f33f9b46",
+        "type": "mysql",
+        "z": "f7652259b01f9ec1",
+        "mydb": "cfg_mysql_local",
+        "name": "",
+        "x": 730,
+        "y": 500,
+        "wires": [
+            [
+                "283b8867de4d2f5a"
+            ]
+        ]
+    },
+    {
+        "id": "488304e7cc5b6953",
+        "type": "mysql",
+        "z": "f7652259b01f9ec1",
+        "mydb": "cfg_mysql_local",
+        "name": "",
+        "x": 950,
+        "y": 220,
+        "wires": [
+            [
+                "428c8370e765aab9"
+            ]
+        ]
+    },
+    {
+        "id": "b60b0110faf9a92c",
+        "type": "mysql",
+        "z": "f7652259b01f9ec1",
+        "mydb": "cfg_mysql_local",
+        "name": "",
+        "x": 770,
+        "y": 620,
+        "wires": [
+            [
+                "52dffb0083d1b740"
+            ]
+        ]
+    },
+    {
+        "id": "ff52e585a8934a78",
+        "type": "mysql",
+        "z": "f7652259b01f9ec1",
+        "mydb": "cfg_mysql_local",
+        "name": "",
+        "x": 730,
+        "y": 680,
+        "wires": [
+            [
+                "0e81f84e77cac4a6"
+            ]
+        ]
+    },
+    {
+        "id": "5047631d6089dd7a",
+        "type": "mysql",
+        "z": "f7652259b01f9ec1",
+        "mydb": "cfg_mysql_local",
+        "name": "",
+        "x": 1290,
+        "y": 660,
+        "wires": [
+            [
+                "421cb2322e49f1e7"
+            ]
+        ]
+    },
+    {
+        "id": "232ece86ce5bfb8d",
+        "type": "mysql",
+        "z": "f7652259b01f9ec1",
+        "mydb": "cfg_mysql_local",
+        "name": "",
+        "x": 170,
+        "y": 1460,
+        "wires": [
+            [
+                "f3375821c8f349bf"
+            ]
+        ]
+    },
+    {
+        "id": "752ed041c15e74bd",
+        "type": "mysql",
+        "z": "f7652259b01f9ec1",
+        "mydb": "cfg_mysql_local",
+        "name": "",
+        "x": 530,
+        "y": 1660,
+        "wires": [
+            [
+                "6dbb216d8ec92397"
+            ]
+        ]
+    },
+    {
+        "id": "b3248566008d66d0",
+        "type": "bcrypt",
+        "z": "f7652259b01f9ec1",
+        "name": "",
+        "action": "encrypt",
+        "field": "payload",
+        "hash": "payload",
+        "target": "payload",
+        "assignment": "replace",
+        "match": "match",
+        "outputs": 1,
+        "rounds": 10,
+        "x": 250,
+        "y": 1520,
+        "wires": [
+            [
+                "79a259b050c0788b"
+            ]
+        ]
+    },
+    {
+        "id": "817a7b9bf0d4a9ff",
+        "type": "debug",
+        "z": "f7652259b01f9ec1",
+        "name": "debug 4",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1220,
+        "y": 1640,
+        "wires": []
+    },
+    {
+        "id": "4bfe8ce69386ad8a",
+        "type": "function",
+        "z": "f7652259b01f9ec1",
+        "name": "function 3",
+        "func": "// Pega o 'bcrypt' que permitimos no settings.js\nconst bcrypt = global.get('bcrypt');\n\nconst senha = msg.payload;\nconst hash = msg.hash;\n\n// Verifica se a biblioteca foi carregada corretamente\nif (!bcrypt) {\n    node.error(\"Biblioteca 'bcrypt' não encontrada. Verifique o settings.js.\", msg);\n    return;\n}\n\n// O 'bcrypt.compare' é assíncrono.\n// Usamos o formato de \"callback\" (função de retorno).\n\nbcrypt.compare(senha, hash, function (err, result) {\n    if (err) {\n        // Se o hash for mal formatado ou der erro\n        node.error(err, msg);\n        msg.match = false;\n        node.send(msg); // Envia a msg de erro\n        node.done();\n    } else {\n        // 'result' será 'true' ou 'false'\n        msg.match = result;\n        node.send(msg); // Envia a msg de sucesso/falha\n        node.done();\n    }\n});\n\n// Retorna 'null' porque a mensagem será enviada\n// de forma assíncrona pelo 'node.send()' acima.\nreturn null;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 540,
+        "y": 1520,
+        "wires": [
+            [
+                "58b53fc4cd0a7878"
+            ]
+        ]
+    },
+    {
+        "id": "dc757d6541b52d55",
+        "type": "function",
+        "z": "f7652259b01f9ec1",
+        "name": "function 4",
+        "func": "// Pega a biblioteca 'bcrypt' que habilitamos no settings.js\nconst bcrypt = global.get('bcrypt');\n\n// 1. Pega os dados que vieram do fluxo\n// (msg.senhaDigitada foi definida no nó \"Montar SQL Busca\")\nconst senha = String(msg.senhaDigitada).trim();\nconst hash = (Buffer.isBuffer(msg.payload[0].password_hash) ? msg.payload[0].password_hash.toString('utf-8') : String(msg.payload[0].password_hash)).trim();\n\n// 2. Verifica se a biblioteca foi carregada\nif (!bcrypt) {\n    node.error(\"Biblioteca 'bcrypt' não encontrada. Verifique o settings.js.\", msg);\n    // Envia pela saída de falha (2)\n    node.send([null, msg]);\n    node.done();\n    return;\n}\n\n// 3. Compara a senha (assíncrono)\nbcrypt.compare(senha, hash, function (err, result) {\n    if (err) {\n        // Erro (ex: hash mal formatado)\n        node.error(err, msg);\n        // Envia pela saída de falha (2)\n        node.send([null, msg]);\n        node.done();\n    } else if (result === true) {\n        // SUCESSO!\n        // 'result' é true (match)\n        // Envia pela saída de sucesso (1)\n        node.send([msg, null]);\n        node.done();\n    } else {\n        // FALHA!\n        // 'result' é false (senha não bate)\n        // Envia pela saída de falha (2)\n        node.send([null, msg]);\n        node.done();\n    }\n});\n\n// 4. Retorna null (pois a mensagem é enviada pelo 'node.send')\nreturn null;",
+        "outputs": 2,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 940,
+        "y": 1720,
+        "wires": [
+            [
+                "b65d74aff748a388"
+            ],
+            [
+                "457af7ed8d2508e5"
+            ]
+        ]
+    },
+    {
+        "id": "3e21fc224df16250",
+        "type": "function",
+        "z": "f7652259b01f9ec1",
+        "name": "Checar Sessão",
+        "func": "// Nó Function antes do template do dashboard\nif (!msg.req || !msg.req.session || !msg.req.session.user) {\n    // Não logado → redireciona pro /login\n    msg.statusCode = 302;\n    msg.headers = { Location: \"/login\" };\n    msg.payload = {};\n    return msg;\n}\n// Se quiser mandar info de papel pro HTML:\nmsg.user = msg.req.session.user;  // {id, username, role}\n// Usuário logado → pode seguir para o template normalmente\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 360,
+        "y": 1320,
+        "wires": [
+            [
+                "94e9e0611fa29c7d"
+            ]
+        ]
+    },
+    {
+        "id": "8dedc02602c3d7d5",
+        "type": "function",
+        "z": "f7652259b01f9ec1",
+        "name": "Checar Login",
+        "func": "if (!msg.req || !msg.req.session || !msg.req.session.user) {\n   msg.statusCode = 401;\n   msg.payload = { ok: false, erro: \"Não autenticado\" };\n    return msg;\n}\n\n// se quisesse restringir apenas admin:\n// if (msg.req.session.user.role !== 'admin') {\n//     msg.statusCode = 403;\n//     msg.payload = { ok: false, erro: \"Acesso negado\" };\n//     return msg;\n// }\n\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 310,
+        "y": 760,
+        "wires": [
+            [
+                "b084abcf98c3f941"
+            ]
+        ]
+    },
+    {
+        "id": "15f17d570ddf1733",
+        "type": "function",
+        "z": "f7652259b01f9ec1",
+        "name": "Checar Login",
+        "func": "if (!msg.req || !msg.req.session || !msg.req.session.user) {\n    msg.statusCode = 401;\n    msg.payload = { ok: false, erro: \"Não autenticado\" };\n    return msg;\n}\n\n// se quisesse restringir apenas admin:\n// if (msg.req.session.user.role !== 'admin') {\n//     msg.statusCode = 403;\n//     msg.payload = { ok: false, erro: \"Acesso negado\" };\n//     return msg;\n// }\n\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 350,
+        "y": 560,
+        "wires": [
+            [
+                "c5e676a6b43ed2c5"
+            ]
+        ]
+    },
+    {
+        "id": "45201c2827bac78a",
+        "type": "http in",
+        "z": "f7652259b01f9ec1",
+        "name": "POST /admin/users",
+        "url": "/admin/users",
+        "method": "post",
+        "upload": false,
+        "skipBodyParsing": false,
+        "swaggerDoc": "",
+        "x": 90,
+        "y": 960,
+        "wires": [
+            [
+                "dbb3f110aa647bb6"
+            ]
+        ]
+    },
+    {
+        "id": "dbb3f110aa647bb6",
+        "type": "function",
+        "z": "f7652259b01f9ec1",
+        "name": "Checar Admin",
+        "func": "const user = msg.req && msg.req.session && msg.req.session.user;\n\nif (!user) {\n    msg.statusCode = 401;\n    msg.payload = { ok:false, erro:\"Não autenticado\" };\n    return [null, msg];\n}\n\nif (user.role !== 'admin') {\n    msg.statusCode = 403;\n    msg.payload = { ok:false, erro:\"Acesso permitido apenas para administradores.\" };\n    return [null, msg];\n}\n\n// autorizado\nreturn [msg, null];",
+        "outputs": 2,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 280,
+        "y": 960,
+        "wires": [
+            [
+                "7122fe59108d23a3"
+            ],
+            [
+                "53cda43af96db0e3"
+            ]
+        ]
+    },
+    {
+        "id": "7122fe59108d23a3",
+        "type": "json",
+        "z": "f7652259b01f9ec1",
+        "name": "Parse JSON Novo Usuário",
+        "property": "payload",
+        "action": "obj",
+        "pretty": false,
+        "x": 620,
+        "y": 960,
+        "wires": [
+            [
+                "f50ef71819d6ee1c"
+            ]
+        ]
+    },
+    {
+        "id": "f50ef71819d6ee1c",
+        "type": "function",
+        "z": "f7652259b01f9ec1",
+        "name": "Preparar p/ Hash (novo usuário)",
+        "func": "const dados = msg.payload || {};\nconst username = String(dados.username || '').trim();\nconst senha    = String(dados.password || '').trim();\nconst role     = String(dados.role || 'user').trim() || 'user';\n\nif (!username || !senha) {\n    msg.statusCode = 400;\n    msg.payload = { ok:false, erro:\"username e password são obrigatórios\" };\n    return [null, msg];\n}\n\n// guarda dados do novo usuário (sem senha)\nmsg.novoUsuario = { username, role };\n\n// manda só a senha para o nó bcrypt\nmsg.payload = senha;\n\nreturn [msg, null];",
+        "outputs": 2,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 930,
+        "y": 960,
+        "wires": [
+            [
+                "fe2398608c76e266",
+                "76553f679b52a39f"
+            ],
+            [
+                "53cda43af96db0e3"
+            ]
+        ]
+    },
+    {
+        "id": "fe2398608c76e266",
+        "type": "bcrypt",
+        "z": "f7652259b01f9ec1",
+        "name": "Criptografar senha (novo usuário)",
+        "action": "encrypt",
+        "field": "payload",
+        "hash": "payload",
+        "target": "payload",
+        "assignment": "replace",
+        "match": "match",
+        "outputs": 1,
+        "rounds": 10,
+        "x": 1260,
+        "y": 960,
+        "wires": [
+            [
+                "26c03510d705e861"
+            ]
+        ]
+    },
+    {
+        "id": "26c03510d705e861",
+        "type": "function",
+        "z": "f7652259b01f9ec1",
+        "name": "Montar SQL Novo Usuário",
+        "func": "const hash = msg.payload;\nconst u = msg.novoUsuario || {};\n\nmsg.topic = \"INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)\";\nmsg.payload = [u.username, hash, u.role];\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1540,
+        "y": 940,
+        "wires": [
+            [
+                "b4d1aea1ea0336eb"
+            ]
+        ]
+    },
+    {
+        "id": "b4d1aea1ea0336eb",
+        "type": "mysql",
+        "z": "f7652259b01f9ec1",
+        "mydb": "cfg_mysql_local",
+        "name": "MySQL_Localhost",
+        "x": 1770,
+        "y": 940,
+        "wires": [
+            [
+                "5030adb733c78bc5"
+            ]
+        ]
+    },
+    {
+        "id": "5030adb733c78bc5",
+        "type": "function",
+        "z": "f7652259b01f9ec1",
+        "name": "Resposta OK (novo usuário)",
+        "func": "const res = Array.isArray(msg.payload) ? msg.payload[0] : msg.payload;\nconst insertId = res && res.insertId;\nconst u = msg.novoUsuario || {};\n\nmsg.payload = {\n    ok: true,\n    id: insertId,\n    username: u.username,\n    role: u.role\n};\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 2000,
+        "y": 940,
+        "wires": [
+            [
+                "1e3fe10fd9758ad9",
+                "531180a6d1af7ecc"
+            ]
+        ]
+    },
+    {
+        "id": "28bf5b96fa76dc03",
+        "type": "http in",
+        "z": "f7652259b01f9ec1",
+        "name": "GET /logs",
+        "url": "/logs",
+        "method": "get",
+        "upload": false,
+        "skipBodyParsing": false,
+        "swaggerDoc": "",
+        "x": 60,
+        "y": 1020,
+        "wires": [
+            [
+                "126bd623a5fe7147"
+            ]
+        ]
+    },
+    {
+        "id": "126bd623a5fe7147",
+        "type": "function",
+        "z": "f7652259b01f9ec1",
+        "name": "Checar Admin",
+        "func": "const user = msg.req && msg.req.session && msg.req.session.user;\n\nif (!user) {\n    msg.statusCode = 401;\n    msg.payload = { ok:false, erro:\"Não autenticado\" };\n    return [null, msg];\n}\n\nif (user.role !== 'admin') {\n    msg.statusCode = 403;\n    msg.payload = { ok:false, erro:\"Acesso permitido apenas para administradores.\" };\n    return [null, msg];\n}\n\n// autorizado\nreturn [msg, null];",
+        "outputs": 2,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 240,
+        "y": 1020,
+        "wires": [
+            [
+                "071fb5effe6b7ead"
+            ],
+            [
+                "53cda43af96db0e3"
+            ]
+        ]
+    },
+    {
+        "id": "071fb5effe6b7ead",
+        "type": "function",
+        "z": "f7652259b01f9ec1",
+        "name": "Montar SQL Logs",
+        "func": "msg.topic = \"SELECT id, event_type, description, ip_address, created_at FROM logs ORDER BY created_at DESC LIMIT 100\";\nreturn msg;",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 490,
+        "y": 1020,
+        "wires": [
+            [
+                "ab3ad765f9ff015d"
+            ]
+        ]
+    },
+    {
+        "id": "ab3ad765f9ff015d",
+        "type": "mysql",
+        "z": "f7652259b01f9ec1",
+        "mydb": "cfg_mysql_local",
+        "name": "MySQL_Localhost",
+        "x": 730,
+        "y": 1020,
+        "wires": [
+            [
+                "53cda43af96db0e3"
+            ]
+        ]
+    },
+    {
+        "id": "a47bd8ff9492279a",
+        "type": "template",
+        "z": "f7652259b01f9ec1",
+        "name": "logs-view",
+        "field": "payload",
+        "fieldType": "msg",
+        "format": "handlebars",
+        "syntax": "mustache",
+        "template": "<!DOCTYPE html>\n<html lang=\"pt-br\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>Logs do Sistema - SCOM</title>\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n\n    <style>\n        :root {\n            --bg: #f4f4f4;\n            --card-bg: #ffffff;\n            --accent: #007bff;\n            --accent-dark: #0056b3;\n            --text-main: #333;\n            --text-muted: #666;\n            --border: #ddd;\n            --error: #c0392b;\n        }\n\n        * {\n            box-sizing: border-box;\n        }\n\n        body {\n            margin: 0;\n            padding: 20px;\n            font-family: Arial, sans-serif;\n            background: var(--bg);\n            color: var(--text-main);\n        }\n\n        .container {\n            max-width: 1000px;\n            margin: 0 auto;\n            background: var(--card-bg);\n            border-radius: 10px;\n            padding: 20px 24px 28px;\n            box-shadow: 0 2px 6px rgba(0,0,0,0.08);\n        }\n\n        h1 {\n            margin-top: 0;\n            font-size: 1.6rem;\n            display: flex;\n            align-items: center;\n            gap: 8px;\n        }\n\n        h1 span.icon {\n            font-size: 1.4rem;\n        }\n\n        .subtitle {\n            margin: 4px 0 16px;\n            color: var(--text-muted);\n            font-size: 0.95rem;\n        }\n\n        .controls {\n            display: flex;\n            flex-wrap: wrap;\n            gap: 10px;\n            align-items: center;\n            margin-bottom: 14px;\n        }\n\n        .controls-group {\n            display: flex;\n            flex-wrap: wrap;\n            gap: 10px;\n            align-items: center;\n        }\n\n        label {\n            font-size: 0.9rem;\n            color: var(--text-muted);\n        }\n\n        select,\n        input[type=\"text\"] {\n            padding: 6px 8px;\n            border-radius: 6px;\n            border: 1px solid var(--border);\n            font-size: 0.9rem;\n        }\n\n        button {\n            padding: 7px 12px;\n            border-radius: 6px;\n            border: none;\n            font-size: 0.9rem;\n            cursor: pointer;\n            background: var(--accent);\n            color: #fff;\n        }\n\n        button:hover {\n            background: var(--accent-dark);\n        }\n\n        .badge {\n            display: inline-block;\n            padding: 2px 8px;\n            border-radius: 999px;\n            font-size: 0.8rem;\n            font-weight: bold;\n        }\n\n        .badge-info {\n            background: #e3f2fd;\n            color: #1565c0;\n        }\n\n        .badge-erro {\n            background: #fdecea;\n            color: #c0392b;\n        }\n\n        .badge-outro {\n            background: #f3e5f5;\n            color: #6a1b9a;\n        }\n\n        .status-bar {\n            display: flex;\n            justify-content: space-between;\n            align-items: center;\n            font-size: 0.85rem;\n            color: var(--text-muted);\n            margin-bottom: 8px;\n            gap: 8px;\n            flex-wrap: wrap;\n        }\n\n        .status-message.error {\n            color: var(--error);\n            font-weight: bold;\n        }\n\n        .table-wrapper {\n            width: 100%;\n            overflow-x: auto;\n            border-radius: 8px;\n            border: 1px solid var(--border);\n        }\n\n        table {\n            width: 100%;\n            border-collapse: collapse;\n            font-size: 0.9rem;\n            min-width: 600px;\n        }\n\n        thead {\n            background: #f0f2f5;\n        }\n\n        th, td {\n            padding: 8px 10px;\n            text-align: left;\n            border-bottom: 1px solid #eee;\n        }\n\n        th {\n            font-weight: bold;\n            color: var(--text-muted);\n        }\n\n        tr:nth-child(even) {\n            background: #fafafa;\n        }\n\n        .col-datetime {\n            white-space: nowrap;\n            font-family: \"Consolas\", \"Roboto Mono\", monospace;\n            font-size: 0.85rem;\n        }\n\n        .col-desc {\n            max-width: 420px;\n        }\n\n        .col-desc span {\n            display: inline-block;\n            word-break: break-word;\n        }\n\n        .footer-note {\n            margin-top: 10px;\n            font-size: 0.8rem;\n            color: var(--text-muted);\n        }\n\n        @media (max-width: 600px) {\n            .container {\n                padding: 16px;\n            }\n            h1 {\n                font-size: 1.3rem;\n            }\n        }\n    </style>\n</head>\n<body>\n<div class=\"container\">\n    <h1>\n        <span class=\"icon\">📜</span>\n        Logs do Sistema\n    </h1>\n    <p class=\"subtitle\">\n        Visualização dos últimos eventos registrados pelo backend (API, login, comandos, etc.).\n    </p>\n\n    <div class=\"controls\">\n        <div class=\"controls-group\">\n            <label for=\"filtroTipo\">Tipo:</label>\n            <select id=\"filtroTipo\">\n                <option value=\"\">Todos</option>\n                <option value=\"INFO\">INFO</option>\n                <option value=\"ERRO\">ERRO</option>\n                <option value=\"WARN\">WARN</option>\n            </select>\n        </div>\n\n        <div class=\"controls-group\">\n            <label for=\"filtroTexto\">Filtrar por texto/IP:</label>\n            <input type=\"text\" id=\"filtroTexto\" placeholder=\"Buscar em descrição ou IP...\">\n        </div>\n\n        <button id=\"btnReload\" type=\"button\">Atualizar agora</button>\n    </div>\n\n    <div class=\"status-bar\">\n        <span id=\"statusMessage\" class=\"status-message\">Carregando logs...</span>\n        <span id=\"statusInfo\" class=\"status-info\"></span>\n    </div>\n\n    <div class=\"table-wrapper\">\n        <table>\n            <thead>\n            <tr>\n                <th>ID</th>\n                <th>Data/Hora</th>\n                <th>Tipo</th>\n                <th>Descrição</th>\n                <th>IP</th>\n            </tr>\n            </thead>\n            <tbody id=\"logsTableBody\">\n            <!-- Linhas preenchidas via JS -->\n            </tbody>\n        </table>\n    </div>\n\n    <p class=\"footer-note\">\n        Esta página consome a rota <code>GET /logs</code>. Apenas usuários com perfil <strong>admin</strong> devem ter acesso.\n    </p>\n</div>\n\n<script>\n    const filtroTipo   = document.getElementById('filtroTipo');\n    const filtroTexto  = document.getElementById('filtroTexto');\n    const btnReload    = document.getElementById('btnReload');\n    const statusMsg    = document.getElementById('statusMessage');\n    const statusInfo   = document.getElementById('statusInfo');\n    const tbody        = document.getElementById('logsTableBody');\n\n    let todosLogs = [];\n\n    function formatDateTime(isoStr) {\n        if (!isoStr) return '-';\n        const d = new Date(isoStr);\n        if (isNaN(d.getTime())) return isoStr;\n\n        const pad = n => String(n).padStart(2, '0');\n        const dia  = pad(d.getDate());\n        const mes  = pad(d.getMonth() + 1);\n        const ano  = d.getFullYear();\n        const hora = pad(d.getHours());\n        const min  = pad(d.getMinutes());\n        const seg  = pad(d.getSeconds());\n\n        return `${dia}/${mes}/${ano} ${hora}:${min}:${seg}`;\n    }\n\n    function criarBadgeTipo(tipo) {\n        const t = (tipo || '').toUpperCase();\n        let classe = 'badge-outro';\n        if (t === 'INFO') classe = 'badge-info';\n        else if (t === 'ERRO' || t === 'ERROR') classe = 'badge-erro';\n\n        return `<span class=\"badge ${classe}\">${t || '-'}</span>`;\n    }\n\n    function aplicarFiltros() {\n        const tipoSel = (filtroTipo.value || '').toUpperCase();\n        const texto   = (filtroTexto.value || '').toLowerCase();\n\n        const filtrados = todosLogs.filter(log => {\n            const tipoOK = !tipoSel || (String(log.event_type || '').toUpperCase() === tipoSel);\n\n            const blobTexto = [\n                log.description || '',\n                log.ip_address || '',\n                log.event_type || ''\n            ].join(' ').toLowerCase();\n\n            const textoOK = !texto || blobTexto.includes(texto);\n\n            return tipoOK && textoOK;\n        });\n\n        renderTabela(filtrados);\n        statusInfo.textContent = `${filtrados.length} de ${todosLogs.length} registros exibidos`;\n    }\n\n    function renderTabela(lista) {\n        tbody.innerHTML = '';\n        if (!lista || lista.length === 0) {\n            tbody.innerHTML = `<tr><td colspan=\"5\" style=\"text-align:center; color:#888; padding:12px;\">Nenhum log encontrado.</td></tr>`;\n            return;\n        }\n\n        const linhas = lista.map(log => {\n            return `\n                <tr>\n                    <td>${log.id ?? '-'}</td>\n                    <td class=\"col-datetime\">${formatDateTime(log.created_at)}</td>\n                    <td>${criarBadgeTipo(log.event_type)}</td>\n                    <td class=\"col-desc\"><span>${log.description || '-'}</span></td>\n                    <td>${log.ip_address || '-'}</td>\n                </tr>\n            `;\n        });\n\n        tbody.innerHTML = linhas.join('');\n    }\n\n    async function carregarLogs() {\n        statusMsg.textContent = 'Carregando logs...';\n        statusMsg.classList.remove('error');\n\n        try {\n            const resp = await fetch('/logs', { cache: 'no-store' });\n\n            if (!resp.ok) {\n                statusMsg.textContent = `Erro ao carregar logs (HTTP ${resp.status})`;\n                statusMsg.classList.add('error');\n                return;\n            }\n\n            const data = await resp.json();\n            if (!Array.isArray(data)) {\n                statusMsg.textContent = 'Formato inesperado de resposta de /logs.';\n                statusMsg.classList.add('error');\n                return;\n            }\n\n            todosLogs = data;\n            statusMsg.textContent = 'Logs atualizados com sucesso.';\n            statusMsg.classList.remove('error');\n\n            aplicarFiltros();\n\n        } catch (e) {\n            console.error(e);\n            statusMsg.textContent = 'Erro de conexão ao buscar /logs.';\n            statusMsg.classList.add('error');\n        }\n    }\n\n    // Eventos\n    filtroTipo.addEventListener('change', aplicarFiltros);\n    filtroTexto.addEventListener('input', aplicarFiltros);\n    btnReload.addEventListener('click', carregarLogs);\n\n    // Carrega inicialmente e depois a cada 15s\n    carregarLogs();\n    setInterval(carregarLogs, 15000);\n</script>\n</body>\n</html>\n",
+        "output": "str",
+        "x": 480,
+        "y": 1260,
+        "wires": [
+            [
+                "9608e41f4a62425b"
+            ]
+        ]
+    },
+    {
+        "id": "0d21d7d45d62c241",
+        "type": "http in",
+        "z": "f7652259b01f9ec1",
+        "name": "GET /logs-view",
+        "url": "/logs-view",
+        "method": "get",
+        "upload": false,
+        "skipBodyParsing": false,
+        "swaggerDoc": "",
+        "x": 100,
+        "y": 1260,
+        "wires": [
+            [
+                "f6820890e1740c8f"
+            ]
+        ]
+    },
+    {
+        "id": "f6820890e1740c8f",
+        "type": "function",
+        "z": "f7652259b01f9ec1",
+        "name": "Checar Admin",
+        "func": "\nconst user = msg.req && msg.req.session && msg.req.session.user;\n\nif (!user) {\n    msg.statusCode = 401;\n    msg.payload = { ok:false, erro:\"Não autenticado\" };\n    return [null, msg];\n}\n\nif (user.role !== 'admin') {\n    msg.statusCode = 403;\n    msg.payload = { ok:false, erro:\"Acesso permitido apenas para administradores.\" };\n    return [null, msg];\n}\n\n// autorizado\nreturn [msg, null];",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 300,
+        "y": 1260,
+        "wires": [
+            [
+                "a47bd8ff9492279a"
+            ]
+        ]
+    },
+    {
+        "id": "9608e41f4a62425b",
+        "type": "http response",
+        "z": "f7652259b01f9ec1",
+        "name": "",
+        "statusCode": "",
+        "headers": {},
+        "x": 650,
+        "y": 1260,
+        "wires": []
+    },
+    {
+        "id": "f5508d62d81ad695",
+        "type": "http in",
+        "z": "f7652259b01f9ec1",
+        "name": "GET Dashboard Inicial",
+        "url": "/dashboard",
+        "method": "get",
+        "upload": false,
+        "skipBodyParsing": false,
+        "swaggerDoc": "",
+        "x": 120,
+        "y": 820,
+        "wires": [
+            [
+                "842c498423f9c94f"
+            ]
+        ]
+    },
+    {
+        "id": "842c498423f9c94f",
+        "type": "function",
+        "z": "f7652259b01f9ec1",
+        "name": "Checar Sessão & Preparar Dashboard Inicial",
+        "func": "// Verifica se está logado\nconst user = msg.req && msg.req.session && msg.req.session.user;\n\nif (!user) {\n    msg.statusCode = 302;\n    msg.headers = { Location: \"/login\" };\n    msg.payload = {};\n    return msg;\n}\n\n// NORMALIZA o role só por segurança\nconst role = String(user.role || '').trim().toLowerCase();\n\n// Em vez de jogar dentro de payload,\n// colocamos as variáveis direto na msg\nmsg.username = user.username;\nmsg.role = role;\nmsg.isAdmin = (role === 'admin');\n\n// pode deixar o payload como está (não é usado no template)\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 430,
+        "y": 820,
+        "wires": [
+            [
+                "7b65ee16ceb2242f"
+            ]
+        ]
+    },
+    {
+        "id": "7b65ee16ceb2242f",
+        "type": "template",
+        "z": "f7652259b01f9ec1",
+        "name": "Dashboard Inicial HTML",
+        "field": "payload",
+        "fieldType": "msg",
+        "format": "html",
+        "syntax": "mustache",
+        "template": "<!DOCTYPE html>\n<html lang=\"pt-br\">\n\n<head>\n    <meta charset=\"UTF-8\">\n    <title>Dashboard - Sistema de Tanques</title>\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n\n    <style>\n        :root {\n            --bg: #f4f4f4;\n            --card-bg: #ffffff;\n            --accent: #007bff;\n            --accent-dark: #0056b3;\n            --text-main: #333;\n            --text-muted: #666;\n            --border: #ddd;\n            --admin: #8e44ad;\n            --user: #16a085;\n        }\n\n        * {\n            box-sizing: border-box;\n        }\n\n        body {\n            margin: 0;\n            padding: 20px;\n            font-family: Arial, sans-serif;\n            background: radial-gradient(circle at top, #e6f0ff 0, #f4f4f4 50%, #f4f4f4 100%);\n            color: var(--text-main);\n        }\n\n        .container {\n            max-width: 900px;\n            margin: 0 auto;\n            background: var(--card-bg);\n            border-radius: 14px;\n            padding: 24px 26px 30px;\n            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);\n        }\n\n        .header {\n            display: flex;\n            justify-content: space-between;\n            align-items: flex-start;\n            gap: 16px;\n            margin-bottom: 22px;\n        }\n\n        .header-left h1 {\n            margin: 0 0 6px;\n            font-size: 1.6rem;\n        }\n\n        .header-left p {\n            margin: 0;\n            font-size: 0.95rem;\n            color: var(--text-muted);\n        }\n\n        .badge-role {\n            padding: 6px 12px;\n            border-radius: 999px;\n            font-size: 0.8rem;\n            font-weight: bold;\n            text-transform: uppercase;\n            letter-spacing: 0.03em;\n            display: inline-flex;\n            align-items: center;\n            gap: 6px;\n        }\n\n        .badge-role.admin {\n            background: #f3e5f5;\n            color: var(--admin);\n        }\n\n        .badge-role.user {\n            background: #e0f7f4;\n            color: var(--user);\n        }\n\n        .badge-role span.icon {\n            font-size: 1.1rem;\n        }\n\n        .welcome {\n            margin-bottom: 18px;\n            font-size: 1rem;\n        }\n\n        .cards-grid {\n            display: grid;\n            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));\n            gap: 16px;\n            margin-top: 10px;\n        }\n\n        .card-btn {\n            text-decoration: none;\n            background: #f7f9fc;\n            border-radius: 10px;\n            padding: 14px 14px 16px;\n            border: 1px solid rgba(0, 0, 0, 0.05);\n            display: block;\n            transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease, background 0.12s ease;\n            color: inherit;\n        }\n\n        .card-btn:hover {\n            transform: translateY(-2px);\n            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);\n            border-color: var(--accent);\n            background: #f0f6ff;\n        }\n\n        .card-title {\n            font-weight: bold;\n            margin-bottom: 6px;\n            display: flex;\n            align-items: center;\n            gap: 8px;\n        }\n\n        .card-title span.icon {\n            font-size: 1.1rem;\n        }\n\n        .card-desc {\n            font-size: 0.9rem;\n            color: var(--text-muted);\n        }\n\n        .section-title {\n            margin-top: 4px;\n            font-size: 0.95rem;\n            font-weight: bold;\n            color: var(--text-muted);\n        }\n\n        .footer-note {\n            margin-top: 18px;\n            font-size: 0.8rem;\n            color: var(--text-muted);\n        }\n\n        .logout {\n            font-size: 0.8rem;\n            text-align: right;\n            margin-top: 4px;\n        }\n\n        .logout a {\n            color: var(--accent-dark);\n            text-decoration: none;\n        }\n\n        .logout a:hover {\n            text-decoration: underline;\n        }\n\n        @media (max-width: 600px) {\n            .container {\n                padding: 18px;\n            }\n\n            .header-left h1 {\n                font-size: 1.4rem;\n            }\n        }\n    </style>\n</head>\n\n<body>\n    <div class=\"container\">\n        <div class=\"header\">\n            <div class=\"header-left\">\n                <h1>Dashboard do Sistema de Tanques</h1>\n                <p>Bem-vindo, <strong>{{username}}</strong>!</p>\n            </div>\n            <div class=\"header-right\">\n                {{#isAdmin}}\n                <div class=\"badge-role admin\">\n                    <span class=\"icon\">🛠️</span>\n                    Administrador\n                </div>\n                {{/isAdmin}}\n                {{^isAdmin}}\n                <div class=\"badge-role user\">\n                    <span class=\"icon\">👤</span>\n                    Usuário comum\n                </div>\n                {{/isAdmin}}\n            </div>\n        </div>\n\n        <p class=\"welcome\">\n            Selecione uma das opções abaixo para acessar as funcionalidades disponíveis para o seu perfil.\n        </p>\n\n        <div class=\"section-title\">Monitoramento</div>\n        <div class=\"cards-grid\">\n            <!-- Botão comum a TODOS: medições atuais -->\n            <a href=\"/dashboard/medicoes\" class=\"card-btn\">\n                <div class=\"card-title\">\n                    <span class=\"icon\">📈</span>\n                    Medições atuais\n                </div>\n                <div class=\"card-desc\">\n                    Visualizar os níveis mais recentes lidos pela planta em tempo real e colocar setpoint.\n                </div>\n            </a>\n        \n            <a href=\"/dashboard/historico\" class=\"card-btn\">\n                <div class=\"card-title\">\n                    <span class=\"icon\">📊</span>\n                    Histórico de medições\n                </div>\n                <div class=\"card-desc\">\n                    Acessar a tabela completa de medições armazenadas no banco de dados.\n                </div>\n            </a>\n           \n        </div>\n\n        {{#isAdmin}}\n        <div class=\"section-title\" style=\"margin-top:20px;\">Administração</div>\n        <div class=\"cards-grid\">\n            <!-- Só admin: logs -->\n            <a href=\"/logs-view\" class=\"card-btn\">\n                <div class=\"card-title\">\n                    <span class=\"icon\">📜</span>\n                    Logs do sistema\n                </div>\n                <div class=\"card-desc\">\n                    Consultar eventos do backend, autenticações, erros e registros diversos.\n                </div>\n            </a>\n\n            <!-- Só admin: cadastro de usuários -->\n            <a href=\"/admin/users-view\" class=\"card-btn\">\n                <div class=\"card-title\">\n                    <span class=\"icon\">➕</span>\n                    Cadastro de usuários\n                </div>\n                <div class=\"card-desc\">\n                    Cadastrar novos usuários e definir seus perfis de acesso.\n                </div>\n            </a>\n\n            <a href=\"/commands\" class=\"card-btn\">\n                <div class=\"card-title\">\n                    <span class=\"icon\">🎛️</span>\n                    Histórico de comandos\n                </div>\n                <div class=\"card-desc\">\n                    Visualizar todos os comandos enviados, seus status e o usuário responsável.\n                </div>\n            </a>\n        \n        </div>\n        {{/isAdmin}}\n\n        <div class=\"footer-note\">\n            Seu perfil atual é: <strong>{{role}}</strong>.\n            Administradores podem gerenciar usuários, visualizar logs e acessar dados completos da planta.\n            Usuários comuns podem enviar parâmetros e visualizar as medições.\n        </div>\n\n        <div class=\"logout\">\n            <!-- Você pode depois criar uma rota /logout que destrói a sessão -->\n            <!-- <a href=\"/logout\">Sair</a> -->\n        </div>\n    </div>\n</body>\n\n</html>",
+        "output": "str",
+        "x": 750,
+        "y": 820,
+        "wires": [
+            [
+                "9d029a52bcc9ce9d"
+            ]
+        ]
+    },
+    {
+        "id": "9d029a52bcc9ce9d",
+        "type": "http response",
+        "z": "f7652259b01f9ec1",
+        "name": "",
+        "statusCode": "",
+        "headers": {},
+        "x": 950,
+        "y": 820,
+        "wires": []
+    },
+    {
+        "id": "7c1c8c5093875728",
+        "type": "http in",
+        "z": "f7652259b01f9ec1",
+        "name": "GET /admin/users-view",
+        "url": "/admin/users-view",
+        "method": "get",
+        "upload": false,
+        "skipBodyParsing": false,
+        "swaggerDoc": "",
+        "x": 120,
+        "y": 1220,
+        "wires": [
+            [
+                "957a4663ba96a51f"
+            ]
+        ]
+    },
+    {
+        "id": "934824a8966d7611",
+        "type": "template",
+        "z": "f7652259b01f9ec1",
+        "name": "users-view",
+        "field": "payload",
+        "fieldType": "msg",
+        "format": "html",
+        "syntax": "mustache",
+        "template": "<!DOCTYPE html>\n<html lang=\"pt-br\">\n\n<head>\n    <meta charset=\"UTF-8\">\n    <title>Cadastro de Usuários - Sistema de Tanques</title>\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n\n    <style>\n        :root {\n            --bg: #f4f4f4;\n            --card-bg: #ffffff;\n            --accent: #007bff;\n            --accent-dark: #0056b3;\n            --text-main: #333;\n            --text-muted: #666;\n            --border: #ddd;\n            --error: #c0392b;\n            --success: #16a085;\n        }\n\n        * {\n            box-sizing: border-box;\n        }\n\n        body {\n            margin: 0;\n            padding: 20px;\n            font-family: Arial, sans-serif;\n            background: var(--bg);\n            color: var(--text-main);\n        }\n\n        .container {\n            max-width: 900px;\n            margin: 0 auto;\n            background: var(--card-bg);\n            border-radius: 14px;\n            padding: 24px;\n            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);\n        }\n\n        h1 {\n            margin-top: 0;\n            font-size: 1.6rem;\n            display: flex;\n            align-items: center;\n            gap: 8px;\n        }\n\n        h1 span.icon {\n            font-size: 1.4rem;\n        }\n\n        .subtitle {\n            margin: 4px 0 18px;\n            font-size: 0.95rem;\n            color: var(--text-muted);\n        }\n\n        .grid {\n            display: grid;\n            grid-template-columns: minmax(260px, 1.1fr) minmax(300px, 1.2fr);\n            gap: 20px;\n        }\n\n        .card {\n            border-radius: 12px;\n            border: 1px solid var(--border);\n            background: #fafafa;\n            padding: 16px 18px 18px;\n        }\n\n        .card-title {\n            font-weight: bold;\n            margin-bottom: 10px;\n            display: flex;\n            align-items: center;\n            gap: 6px;\n        }\n\n        .card-title span.icon {\n            font-size: 1.1rem;\n        }\n\n        label {\n            display: block;\n            margin-top: 8px;\n            margin-bottom: 4px;\n            font-size: 0.9rem;\n        }\n\n        input,\n        select {\n            width: 100%;\n            padding: 7px 9px;\n            border-radius: 6px;\n            border: 1px solid var(--border);\n            font-size: 0.9rem;\n        }\n\n        button {\n            margin-top: 10px;\n            padding: 8px 14px;\n            border-radius: 6px;\n            border: none;\n            font-size: 0.9rem;\n            cursor: pointer;\n            background: var(--accent);\n            color: #fff;\n        }\n\n        button:hover {\n            background: var(--accent-dark);\n        }\n\n        .status {\n            margin-top: 8px;\n            font-size: 0.85rem;\n        }\n\n        .status.error {\n            color: var(--error);\n            font-weight: bold;\n        }\n\n        .status.success {\n            color: var(--success);\n            font-weight: bold;\n        }\n\n        .table-wrapper {\n            margin-top: 8px;\n            border-radius: 8px;\n            border: 1px solid var(--border);\n            overflow-x: auto;\n            background: #fff;\n        }\n\n        table {\n            width: 100%;\n            border-collapse: collapse;\n            font-size: 0.9rem;\n            min-width: 320px;\n        }\n\n        th,\n        td {\n            padding: 8px 9px;\n            border-bottom: 1px solid #eee;\n            text-align: left;\n        }\n\n        thead {\n            background: #f0f2f5;\n        }\n\n        th {\n            font-weight: bold;\n            color: var(--text-muted);\n        }\n\n        tr:nth-child(even) {\n            background: #fafafa;\n        }\n\n        .badge-role {\n            padding: 2px 8px;\n            border-radius: 999px;\n            font-size: 0.8rem;\n            font-weight: bold;\n        }\n\n        .badge-role.admin {\n            background: #f3e5f5;\n            color: #8e44ad;\n        }\n\n        .badge-role.user {\n            background: #e0f7f4;\n            color: #16a085;\n        }\n\n        .footer-note {\n            margin-top: 16px;\n            font-size: 0.8rem;\n            color: var(--text-muted);\n        }\n\n        @media (max-width: 720px) {\n            .grid {\n                grid-template-columns: 1fr;\n            }\n        }\n    </style>\n</head>\n\n<body>\n    <div class=\"container\">\n        <h1><span class=\"icon\">👥</span> Cadastro de Usuários</h1>\n        <p class=\"subtitle\">\n            Somente administradores podem acessar esta página. Aqui você pode cadastrar novos usuários e visualizar os\n            já existentes.\n        </p>\n\n        <div class=\"grid\">\n            <div class=\"card\">\n                <div class=\"card-title\">\n                    <span class=\"icon\">➕</span>\n                    Novo usuário\n                </div>\n\n                <form id=\"userForm\">\n                    <label for=\"username\">Usuário</label>\n                    <input type=\"text\" id=\"username\" required placeholder=\"ex: gui\">\n\n                    <label for=\"password\">Senha</label>\n                    <input type=\"password\" id=\"password\" required placeholder=\"ex: adm123\">\n\n                    <label for=\"role\">Perfil de acesso</label>\n                    <select id=\"role\">\n                    <option value=\"user\">Usuário comum</option>\n                    <option value=\"admin\">Administrador</option>\n                </select>\n\n                    <button type=\"submit\">Cadastrar usuário</button>\n                    <div id=\"formStatus\" class=\"status\"></div>\n                </form>\n            </div>\n\n            <div class=\"card\">\n                <div class=\"card-title\">\n                    <span class=\"icon\">📋</span>\n                    Usuários cadastrados\n                </div>\n                <button id=\"btnReload\" type=\"button\">Recarregar lista</button>\n                <div id=\"listStatus\" class=\"status\"></div>\n                <div class=\"table-wrapper\">\n                    <table>\n                        <thead>\n                            <tr>\n                                <th>ID</th>\n                                <th>Usuário</th>\n                                <th>Perfil</th>\n                            </tr>\n                        </thead>\n                        <tbody id=\"usersTableBody\">\n                            <tr>\n                                <td colspan=\"3\" style=\"text-align:center; padding:10px; color:#888;\">Carregando...</td>\n                            </tr>\n                        </tbody>\n                    </table>\n                </div>\n            </div>\n        </div>\n\n        <p class=\"footer-note\">\n            Esta interface utiliza a API <code>POST /admin/users</code> para cadastro\n            e <code>GET /admin/users</code> para listagem.\n        </p>\n    </div>\n\n    <script>\n        const userForm    = document.getElementById('userForm');\n    const formStatus  = document.getElementById('formStatus');\n    const listStatus  = document.getElementById('listStatus');\n    const btnReload   = document.getElementById('btnReload');\n    const usersTBody  = document.getElementById('usersTableBody');\n\n    function setStatus(el, msg, type) {\n        el.textContent = msg || '';\n        el.classList.remove('error', 'success');\n        if (type) el.classList.add(type);\n    }\n\n    async function carregarUsuarios() {\n        setStatus(listStatus, 'Carregando usuários...', '');\n        usersTBody.innerHTML = '<tr><td colspan=\"3\" style=\"text-align:center; padding:10px; color:#888;\">Carregando...</td></tr>';\n\n        try {\n            const resp = await fetch('/admin/users', { cache: 'no-store' });\n            if (!resp.ok) {\n                setStatus(listStatus, 'Erro ao carregar usuários (HTTP ' + resp.status + ')', 'error');\n                return;\n            }\n            const data = await resp.json();\n            if (!Array.isArray(data)) {\n                setStatus(listStatus, 'Resposta inesperada de /admin/users.', 'error');\n                return;\n            }\n\n            if (data.length === 0) {\n                usersTBody.innerHTML = '<tr><td colspan=\"3\" style=\"text-align:center; padding:10px; color:#888;\">Nenhum usuário cadastrado.</td></tr>';\n            } else {\n                usersTBody.innerHTML = data.map(u => {\n                    const role = (u.role || '').toLowerCase();\n                    const classe = role === 'admin' ? 'admin' : 'user';\n                    const rotulo = role === 'admin' ? 'Admin' : 'Usuário';\n                    return `\n                        <tr>\n                            <td>${u.id ?? '-'}</td>\n                            <td>${u.username || '-'}</td>\n                            <td><span class=\"badge-role ${classe}\">${rotulo}</span></td>\n                        </tr>\n                    `;\n                }).join('');\n            }\n\n            setStatus(listStatus, data.length + ' usuário(s) carregado(s).', '');\n        } catch (e) {\n            console.error(e);\n            setStatus(listStatus, 'Erro de conexão ao buscar /admin/users.', 'error');\n        }\n    }\n\n    userForm.addEventListener('submit', async (e) => {\n        e.preventDefault();\n        setStatus(formStatus, 'Enviando...', '');\n\n        const username = document.getElementById('username').value.trim();\n        const password = document.getElementById('password').value;\n        const role     = document.getElementById('role').value;\n\n        if (!username || !password) {\n            setStatus(formStatus, 'Preencha usuário e senha.', 'error');\n            return;\n        }\n\n        try {\n            const resp = await fetch('/admin/users', {\n                method: 'POST',\n                headers: { 'Content-Type': 'application/json' },\n                body: JSON.stringify({ username, password, role })\n            });\n\n            const data = await resp.json().catch(() => ({}));\n\n            if (!resp.ok || data.ok === false) {\n                setStatus(formStatus, (data.erro || 'Falha ao cadastrar usuário.'), 'error');\n                return;\n            }\n\n            setStatus(formStatus, 'Usuário cadastrado com sucesso!', 'success');\n            userForm.reset();\n            document.getElementById('role').value = role; // mantém o perfil selecionado\n            carregarUsuarios();\n\n        } catch (e) {\n            console.error(e);\n            setStatus(formStatus, 'Erro de conexão ao enviar cadastro.', 'error');\n        }\n    });\n\n    btnReload.addEventListener('click', carregarUsuarios);\n\n    carregarUsuarios();\n    </script>\n</body>\n\n</html>",
+        "output": "str",
+        "x": 490,
+        "y": 1220,
+        "wires": [
+            [
+                "cc7a68d256c1ceb6"
+            ]
+        ]
+    },
+    {
+        "id": "957a4663ba96a51f",
+        "type": "function",
+        "z": "f7652259b01f9ec1",
+        "name": "Checar Admin",
+        "func": "\nconst user = msg.req && msg.req.session && msg.req.session.user;\n\nif (!user) {\n    msg.statusCode = 401;\n    msg.payload = { ok:false, erro:\"Não autenticado\" };\n    return [null, msg];\n}\n\nif (user.role !== 'admin') {\n    msg.statusCode = 403;\n    msg.payload = { ok:false, erro:\"Acesso permitido apenas para administradores.\" };\n    return [null, msg];\n}\n\n// autorizado\nreturn [msg, null];",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 320,
+        "y": 1220,
+        "wires": [
+            [
+                "934824a8966d7611"
+            ]
+        ]
+    },
+    {
+        "id": "cc7a68d256c1ceb6",
+        "type": "http response",
+        "z": "f7652259b01f9ec1",
+        "name": "",
+        "statusCode": "",
+        "headers": {},
+        "x": 650,
+        "y": 1220,
+        "wires": []
+    },
+    {
+        "id": "24e2761d15502d87",
+        "type": "http in",
+        "z": "f7652259b01f9ec1",
+        "name": "GET /dashboard/historico",
+        "url": "/dashboard/historico",
+        "method": "get",
+        "upload": false,
+        "skipBodyParsing": false,
+        "swaggerDoc": "",
+        "x": 130,
+        "y": 1360,
+        "wires": [
+            [
+                "4abe554113882f34"
+            ]
+        ]
+    },
+    {
+        "id": "4abe554113882f34",
+        "type": "function",
+        "z": "f7652259b01f9ec1",
+        "name": "Checar Sessão",
+        "func": "// Nó Function antes do template do dashboard\nif (!msg.req || !msg.req.session || !msg.req.session.user) {\n    // Não logado → redireciona pro /login\n    msg.statusCode = 302;\n    msg.headers = { Location: \"/login\" };\n    msg.payload = {};\n    return msg;\n}\n// Se quiser mandar info de papel pro HTML:\nmsg.user = msg.req.session.user;  // {id, username, role}\n// Usuário logado → pode seguir para o template normalmente\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 360,
+        "y": 1360,
+        "wires": [
+            [
+                "6359ccc8e058924d"
+            ]
+        ]
+    },
+    {
+        "id": "6359ccc8e058924d",
+        "type": "template",
+        "z": "f7652259b01f9ec1",
+        "name": "histórico",
+        "field": "payload",
+        "fieldType": "msg",
+        "format": "html",
+        "syntax": "mustache",
+        "template": "<!DOCTYPE html>\n<html lang=\"pt-br\">\n\n<head>\n    <meta charset=\"UTF-8\">\n    <title>Histórico de Medições - Sistema de Tanques</title>\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n\n    <style>\n        :root {\n            --bg: #f4f4f4;\n            --card-bg: #ffffff;\n            --accent: #007bff;\n            --accent-dark: #0056b3;\n            --text-main: #333;\n            --text-muted: #666;\n            --border: #ddd;\n            --error: #c0392b;\n        }\n\n        * {\n            box-sizing: border-box;\n        }\n\n        body {\n            margin: 0;\n            padding: 20px;\n            font-family: Arial, sans-serif;\n            background: radial-gradient(circle at top, #e8f0ff 0, #f4f4f4 60%);\n            color: var(--text-main);\n        }\n\n        .container {\n            max-width: 1000px;\n            margin: 0 auto;\n            background: var(--card-bg);\n            border-radius: 14px;\n            padding: 22px 24px 26px;\n            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);\n        }\n\n        h1 {\n            margin-top: 0;\n            font-size: 1.6rem;\n            display: flex;\n            align-items: center;\n            gap: 8px;\n        }\n\n        h1 span.icon {\n            font-size: 1.4rem;\n        }\n\n        .subtitle {\n            margin: 4px 0 16px;\n            font-size: 0.95rem;\n            color: var(--text-muted);\n        }\n\n        .filters {\n            display: grid;\n            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));\n            gap: 12px;\n            margin-bottom: 12px;\n        }\n\n        label {\n            display: block;\n            font-size: 0.85rem;\n            margin-bottom: 3px;\n            color: var(--text-muted);\n        }\n\n        select,\n        input {\n            width: 100%;\n            padding: 7px 9px;\n            border-radius: 6px;\n            border: 1px solid var(--border);\n            font-size: 0.9rem;\n        }\n\n        .actions {\n            display: flex;\n            flex-wrap: wrap;\n            gap: 10px;\n            align-items: center;\n            margin-bottom: 8px;\n        }\n\n        button {\n            padding: 8px 13px;\n            border-radius: 6px;\n            border: none;\n            font-size: 0.9rem;\n            cursor: pointer;\n            background: var(--accent);\n            color: #fff;\n        }\n\n        button:hover {\n            background: var(--accent-dark);\n        }\n\n        .status {\n            font-size: 0.85rem;\n            color: var(--text-muted);\n        }\n\n        .status.error {\n            color: var(--error);\n            font-weight: bold;\n        }\n\n        .table-wrapper {\n            margin-top: 8px;\n            border-radius: 8px;\n            border: 1px solid var(--border);\n            background: #fff;\n            overflow-x: auto;\n        }\n\n        table {\n            width: 100%;\n            border-collapse: collapse;\n            font-size: 0.9rem;\n            min-width: 500px;\n        }\n\n        th,\n        td {\n            padding: 8px 9px;\n            border-bottom: 1px solid #eee;\n            text-align: left;\n        }\n\n        thead {\n            background: #f0f2f5;\n        }\n\n        th {\n            font-weight: bold;\n            color: var(--text-muted);\n        }\n\n        tr:nth-child(even) {\n            background: #fafafa;\n        }\n\n        .col-datetime {\n            white-space: nowrap;\n            font-family: \"Consolas\", \"Roboto Mono\", monospace;\n            font-size: 0.85rem;\n        }\n\n        .footer-note {\n            margin-top: 14px;\n            font-size: 0.8rem;\n            color: var(--text-muted);\n        }\n    </style>\n</head>\n\n<body>\n    <div class=\"container\">\n        <h1><span class=\"icon\">📊</span> Histórico de Medições</h1>\n        <p class=\"subtitle\">\n            Consulte as medições armazenadas no banco de dados por tanque e intervalo de datas.\n        </p>\n\n        <div class=\"filters\">\n            <div>\n                <label for=\"tanque\">Tanque</label>\n                <select id=\"tanque\">\n                <option value=\"1\">Tanque 1</option>\n                <option value=\"2\">Tanque 2</option>\n                <option value=\"3\">Tanque 3</option>\n            </select>\n            </div>\n\n            <div>\n                <label for=\"de\">De (data/hora)</label>\n                <input type=\"datetime-local\" id=\"de\">\n            </div>\n\n            <div>\n                <label for=\"ate\">Até (data/hora)</label>\n                <input type=\"datetime-local\" id=\"ate\">\n            </div>\n        </div>\n\n        <div class=\"actions\">\n            <button id=\"btnBuscar\" type=\"button\">Buscar histórico</button>\n            <span id=\"status\" class=\"status\">Preencha os filtros e clique em \"Buscar histórico\".</span>\n        </div>\n\n        <div class=\"table-wrapper\">\n            <table>\n                <thead>\n                    <tr>\n                        <th>Tanque</th>\n                        <th>Nível</th>\n                        <th>Data/Hora</th>\n                    </tr>\n                </thead>\n                <tbody id=\"historicoBody\">\n                    <tr>\n                        <td colspan=\"3\" style=\"text-align:center; padding:10px; color:#888;\">Nenhum dado carregado.</td>\n                    </tr>\n                </tbody>\n            </table>\n        </div>\n\n        <p class=\"footer-note\">\n            Esta página utiliza a rota <code>/api/medicoes/historico</code>. Ajuste o formato das datas na API se\n            necessário.\n        </p>\n    </div>\n\n    <script>\n        const selectTanque = document.getElementById('tanque');\n    const inputDe      = document.getElementById('de');\n    const inputAte     = document.getElementById('ate');\n    const btnBuscar    = document.getElementById('btnBuscar');\n    const statusEl     = document.getElementById('status');\n    const tbody        = document.getElementById('historicoBody');\n\n    function setStatus(msg, type) {\n        statusEl.textContent = msg || '';\n        statusEl.classList.remove('error');\n        if (type === 'error') statusEl.classList.add('error');\n    }\n\n    function toSQLDateTime(localValue) {\n        if (!localValue) return null;\n        // datetime-local → \"2025-11-12T18:30\"\n        return localValue.replace('T', ' ') + ':00';\n    }\n\n    function formatDateTime(isoOrSql) {\n        if (!isoOrSql) return '-';\n        const s = String(isoOrSql).replace(' ', 'T');\n        const d = new Date(s);\n        if (isNaN(d.getTime())) return isoOrSql;\n\n        const pad = n => String(n).padStart(2, '0');\n        const dia  = pad(d.getDate());\n        const mes  = pad(d.getMonth() + 1);\n        const ano  = d.getFullYear();\n        const hora = pad(d.getHours());\n        const min  = pad(d.getMinutes());\n        const seg  = pad(d.getSeconds());\n\n        return `${dia}/${mes}/${ano} ${hora}:${min}:${seg}`;\n    }\n\n    async function buscarHistorico() {\n        const tanque = selectTanque.value;\n        const deSql  = toSQLDateTime(inputDe.value);\n        const ateSql = toSQLDateTime(inputAte.value);\n\n        if (!tanque) {\n            setStatus('Selecione um tanque.', 'error');\n            return;\n        }\n\n        const params = new URLSearchParams();\n        params.set('tanque', tanque);\n        if (deSql)  params.set('de', deSql);\n        if (ateSql) params.set('ate', ateSql);\n\n        setStatus('Carregando dados...', '');\n        tbody.innerHTML = '<tr><td colspan=\"3\" style=\"text-align:center; padding:10px; color:#888;\">Carregando...</td></tr>';\n\n        try {\n            const resp = await fetch('/api/medicoes/historico?' + params.toString(), { cache: 'no-store' });\n\n            if (!resp.ok) {\n                setStatus('Erro ao buscar histórico (HTTP ' + resp.status + ').', 'error');\n                return;\n            }\n\n            const data = await resp.json();\n            if (!Array.isArray(data)) {\n                setStatus('Resposta inesperada da API de histórico.', 'error');\n                return;\n            }\n\n            if (data.length === 0) {\n                tbody.innerHTML = '<tr><td colspan=\"3\" style=\"text-align:center; padding:10px; color:#888;\">Nenhuma medição encontrada no intervalo.</td></tr>';\n                setStatus('Nenhuma medição encontrada.', '');\n                return;\n            }\n\n            tbody.innerHTML = data.map(row => {\n                const t  = row.tanque_id ?? row.tanque ?? '-';\n                const nv = row.nivel ?? row.value ?? '-';\n                const ts = formatDateTime(row.ts ?? row.timestamp);\n\n                return `\n                    <tr>\n                        <td>${t}</td>\n                        <td>${nv}</td>\n                        <td class=\"col-datetime\">${ts}</td>\n                    </tr>\n                `;\n            }).join('');\n\n            setStatus(data.length + ' medições carregadas.', '');\n        } catch (e) {\n            console.error(e);\n            setStatus('Erro de conexão ao chamar /api/medicoes/historico.', 'error');\n        }\n    }\n\n    btnBuscar.addEventListener('click', buscarHistorico);\n    </script>\n</body>\n\n</html>",
+        "output": "str",
+        "x": 580,
+        "y": 1360,
+        "wires": [
+            [
+                "6e5802149fe44845"
+            ]
+        ]
+    },
+    {
+        "id": "6e5802149fe44845",
+        "type": "http response",
+        "z": "f7652259b01f9ec1",
+        "name": "",
+        "statusCode": "",
+        "headers": {},
+        "x": 730,
+        "y": 1360,
+        "wires": []
+    },
+    {
+        "id": "edc776866f06660c",
+        "type": "http in",
+        "z": "f7652259b01f9ec1",
+        "name": "GET /admin/users",
+        "url": "/admin/users",
+        "method": "get",
+        "upload": false,
+        "skipBodyParsing": false,
+        "swaggerDoc": "",
+        "x": 110,
+        "y": 1080,
+        "wires": [
+            [
+                "4099f6041a78d695"
+            ]
+        ]
+    },
+    {
+        "id": "c8defe964524debe",
+        "type": "function",
+        "z": "f7652259b01f9ec1",
+        "name": "Montar SQL Lista Users",
+        "func": "msg.topic = \"SELECT id, username, role, created_at FROM users ORDER BY id ASC\";\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 550,
+        "y": 1080,
+        "wires": [
+            [
+                "bb5df54734de271e"
+            ]
+        ]
+    },
+    {
+        "id": "bb5df54734de271e",
+        "type": "mysql",
+        "z": "f7652259b01f9ec1",
+        "mydb": "cfg_mysql_local",
+        "name": "MySQL_Localhost",
+        "x": 770,
+        "y": 1080,
+        "wires": [
+            [
+                "c7691ccd45d2ba94"
+            ]
+        ]
+    },
+    {
+        "id": "c7691ccd45d2ba94",
+        "type": "http response",
+        "z": "f7652259b01f9ec1",
+        "name": "",
+        "statusCode": "",
+        "headers": {},
+        "x": 950,
+        "y": 1080,
+        "wires": []
+    },
+    {
+        "id": "18f709801a0bb02b",
+        "type": "inject",
+        "z": "f7652259b01f9ec1",
+        "name": "Atualizar a cada 3s",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "3",
+        "once": true,
+        "x": 220,
+        "y": 380,
+        "wires": [
+            [
+                "075245e5adc14d6a"
+            ]
+        ]
+    },
+    {
+        "id": "075245e5adc14d6a",
+        "type": "http request",
+        "z": "f7652259b01f9ec1",
+        "name": "GET /api/medicoes/atual (interno)",
+        "method": "GET",
+        "ret": "obj",
+        "url": "http://localhost:1880/api/medicoes/atual",
+        "tls": "",
+        "x": 480,
+        "y": 380,
+        "wires": [
+            [
+                "08069d7643c6205f"
+            ]
+        ]
+    },
+    {
+        "id": "08069d7643c6205f",
+        "type": "function",
+        "z": "f7652259b01f9ec1",
+        "name": "Atualizar gauges e gráfico",
+        "func": "if(!Array.isArray(msg.payload)) return null;\nlet t1 = msg.payload.find(o=>o.tanque_id===1);\nlet t3 = msg.payload.find(o=>o.tanque_id===3);\n\n// Simulação dinâmica para visualização\nif(global.get('anim')===undefined) global.set('anim',{up:true});\nlet anim = global.get('anim');\nif(t3){\n  if(anim.up) t3.nivel += 2; else t3.nivel -= 2;\n  if(t3.nivel>90) anim.up=false;\n  if(t3.nivel<20) anim.up=true;\n  global.set('anim',anim);\n}\nreturn [\n  {payload:t1?t1.nivel:0,topic:'T1'},\n  {payload:t3?t3.nivel:0,topic:'T3'},\n  {payload:msg.payload}\n];",
+        "outputs": 3,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 790,
+        "y": 380,
+        "wires": [
+            [
+                "ef58fa53be65b5c3"
+            ],
+            [
+                "a80297ce283c2177"
+            ],
+            [
+                "b28622886c0b9c99"
+            ]
+        ]
+    },
+    {
+        "id": "ef58fa53be65b5c3",
+        "type": "ui_gauge",
+        "z": "f7652259b01f9ec1",
+        "name": "Nível Tanque 1",
+        "group": "7d18cc89b54574f0",
+        "order": 1,
+        "width": "6",
+        "height": "6",
+        "gtype": "level",
+        "title": "Tanque 1 - Nível (%)",
+        "label": "%",
+        "format": "{{value | number:1}}",
+        "min": 0,
+        "max": 100,
+        "colors": [
+            "#2196F3",
+            "#4CAF50",
+            "#F44336"
+        ],
+        "x": 1020,
+        "y": 280,
+        "wires": []
+    },
+    {
+        "id": "a80297ce283c2177",
+        "type": "ui_gauge",
+        "z": "f7652259b01f9ec1",
+        "name": "Nível Tanque 3",
+        "group": "356fb96dad4e0705",
+        "order": 1,
+        "width": "6",
+        "height": "6",
+        "gtype": "level",
+        "title": "Tanque 3 - Nível (%)",
+        "label": "%",
+        "format": "{{value | number:1}}",
+        "min": 0,
+        "max": 100,
+        "colors": [
+            "#2196F3",
+            "#4CAF50",
+            "#F44336"
+        ],
+        "x": 1040,
+        "y": 320,
+        "wires": []
+    },
+    {
+        "id": "b28622886c0b9c99",
+        "type": "ui_chart",
+        "z": "f7652259b01f9ec1",
+        "name": "Histórico Curto Prazo",
+        "group": "356fb96dad4e0705",
+        "order": 2,
+        "width": "4",
+        "height": "2",
+        "label": "Níveis em tempo real",
+        "chartType": "line",
+        "xformat": "HH:mm:ss",
+        "nodata": "",
+        "dot": false,
+        "ymin": "0",
+        "ymax": "100",
+        "removeOlder": "300",
+        "removeOlderPoints": "100",
+        "removeOlderUnit": "60",
+        "cutout": "",
+        "useOneColor": false,
+        "useUTC": false,
+        "colors": [
+            "#42a5f5",
+            "#66bb6a",
+            "#ef5350",
+            "#000000",
+            "#000000",
+            "#000000",
+            "#000000",
+            "#000000",
+            "#000000"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "className": "",
+        "x": 1060,
+        "y": 380,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "1e3fe10fd9758ad9",
+        "type": "http response",
+        "z": "f7652259b01f9ec1",
+        "name": "HTTP Resposta",
+        "statusCode": "",
+        "headers": {},
+        "x": 2220,
+        "y": 920,
+        "wires": []
+    },
+    {
+        "id": "6527450a262feca1",
+        "type": "http response",
+        "z": "f7652259b01f9ec1",
+        "name": "HTTP Resposta",
+        "statusCode": "",
+        "headers": {},
+        "x": 1500,
+        "y": 220,
+        "wires": []
+    },
+    {
+        "id": "9a1682c67612cc35",
+        "type": "http response",
+        "z": "f7652259b01f9ec1",
+        "name": "HTTP Resposta",
+        "statusCode": "",
+        "headers": {},
+        "x": 620,
+        "y": 40,
+        "wires": []
+    },
+    {
+        "id": "ceefa446a31fd002",
+        "type": "http response",
+        "z": "f7652259b01f9ec1",
+        "name": "HTTP Resposta",
+        "statusCode": "",
+        "headers": {},
+        "x": 940,
+        "y": 440,
+        "wires": []
+    },
+    {
+        "id": "3c889485b6af854c",
+        "type": "http response",
+        "z": "f7652259b01f9ec1",
+        "name": "HTTP Resposta",
+        "statusCode": "",
+        "headers": {},
+        "x": 740,
+        "y": 280,
+        "wires": []
+    },
+    {
+        "id": "0a8a4d6cf2116a72",
+        "type": "http in",
+        "z": "f7652259b01f9ec1",
+        "name": "GET /admin/commands",
+        "url": "/admin/commands",
+        "method": "get",
+        "upload": false,
+        "skipBodyParsing": false,
+        "swaggerDoc": "",
+        "x": 120,
+        "y": 1160,
+        "wires": [
+            [
+                "4a62a8f5a110c625"
+            ]
+        ]
+    },
+    {
+        "id": "4a62a8f5a110c625",
+        "type": "function",
+        "z": "f7652259b01f9ec1",
+        "name": "Checar Admin",
+        "func": "\nconst user = msg.req && msg.req.session && msg.req.session.user;\n\nif (!user) {\n    msg.statusCode = 401;\n    msg.payload = { ok:false, erro:\"Não autenticado\" };\n    return [null, msg];\n}\n\nif (user.role !== 'admin') {\n    msg.statusCode = 403;\n    msg.payload = { ok:false, erro:\"Acesso permitido apenas para administradores.\" };\n    return [null, msg];\n}\n\n// autorizado\nreturn [msg, null];",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 320,
+        "y": 1160,
+        "wires": [
+            [
+                "e0f314b8fa91202d"
+            ]
+        ]
+    },
+    {
+        "id": "e0f314b8fa91202d",
+        "type": "function",
+        "z": "f7652259b01f9ec1",
+        "name": "Montar SQL commands",
+        "func": "msg.topic = `SELECT\nid,\ncommand_name,\nvalue, status,\nuser_id,\ncreated_at\nFROM commands ORDER BY created_at DESC LIMIT 100 `;\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 550,
+        "y": 1160,
+        "wires": [
+            [
+                "92e2153522b1b078"
+            ]
+        ]
+    },
+    {
+        "id": "92e2153522b1b078",
+        "type": "mysql",
+        "z": "f7652259b01f9ec1",
+        "mydb": "cfg_mysql_local",
+        "name": "MySQL_Localhost",
+        "x": 810,
+        "y": 1160,
+        "wires": [
+            [
+                "8940ab5c84aac6fe"
+            ]
+        ]
+    },
+    {
+        "id": "8940ab5c84aac6fe",
+        "type": "http response",
+        "z": "f7652259b01f9ec1",
+        "name": "",
+        "statusCode": "",
+        "headers": {},
+        "x": 1010,
+        "y": 1160,
+        "wires": []
+    },
+    {
+        "id": "4099f6041a78d695",
+        "type": "function",
+        "z": "f7652259b01f9ec1",
+        "name": "Checar Admin",
+        "func": "const user = msg.req && msg.req.session && msg.req.session.user;\n\nif (!user) {\n    msg.statusCode = 401;\n    msg.payload = { ok:false, erro:\"Não autenticado\" };\n    return [null, msg];\n}\n\nif (user.role !== 'admin') {\n    msg.statusCode = 403;\n    msg.payload = { ok:false, erro:\"Acesso permitido apenas para administradores.\" };\n    return [null, msg];\n}\n\n// autorizado\nreturn [msg, null];",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 320,
+        "y": 1080,
+        "wires": [
+            [
+                "c8defe964524debe"
+            ]
+        ]
+    },
+    {
+        "id": "9e3d00d3c7c153e9",
+        "type": "http in",
+        "z": "f7652259b01f9ec1",
+        "name": "GET /commands",
+        "url": "/commands",
+        "method": "get",
+        "upload": false,
+        "skipBodyParsing": false,
+        "swaggerDoc": "",
+        "x": 120,
+        "y": 1120,
+        "wires": [
+            [
+                "7439e8f938ea555a"
+            ]
+        ]
+    },
+    {
+        "id": "a655a5d47891c4b7",
+        "type": "template",
+        "z": "f7652259b01f9ec1",
+        "name": "commands",
+        "field": "payload",
+        "fieldType": "msg",
+        "format": "html",
+        "syntax": "mustache",
+        "template": "<!DOCTYPE html>\n<html lang=\"pt-br\">\n\n<head>\n    <meta charset=\"UTF-8\">\n    <title>Histórico de Comandos - SCOM</title>\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <style>\n        :root {\n            --bg: #f4f4f4;\n            --card-bg: #ffffff;\n            --accent: #007bff;\n            --accent-dark: #0056b3;\n            --text-main: #333;\n            --text-muted: #666;\n            --border: #ddd;\n            --error: #c0392b;\n        }\n\n        * {\n            box-sizing: border-box;\n        }\n\n        body {\n            margin: 0;\n            padding: 20px;\n            font-family: Arial, sans-serif;\n            background: var(--bg);\n            color: var(--text-main);\n        }\n\n        .container {\n            max-width: 1000px;\n            margin: 0 auto;\n            background: var(--card-bg);\n            border-radius: 10px;\n            padding: 20px 24px 28px;\n            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);\n        }\n\n        h1 {\n            margin-top: 0;\n            font-size: 1.6rem;\n            display: flex;\n            align-items: center;\n            gap: 8px;\n        }\n\n        h1 .icon {\n            font-size: 1.4rem;\n        }\n\n        .subtitle {\n            margin: 4px 0 16px;\n            color: var(--text-muted);\n            font-size: 0.95rem;\n        }\n\n        .controls {\n            display: flex;\n            flex-wrap: wrap;\n            gap: 10px;\n            align-items: center;\n            margin-bottom: 14px;\n        }\n\n        label {\n            font-size: 0.9rem;\n            color: var(--text-muted);\n        }\n\n        select,\n        input[type=\"text\"] {\n            padding: 6px 8px;\n            border-radius: 6px;\n            border: 1px solid var(--border);\n            font-size: 0.9rem;\n        }\n\n        button {\n            padding: 7px 12px;\n            border-radius: 6px;\n            border: none;\n            font-size: 0.9rem;\n            cursor: pointer;\n            background: var(--accent);\n            color: #fff;\n        }\n\n        button:hover {\n            background: var(--accent-dark);\n        }\n\n        .status-bar {\n            display: flex;\n            justify-content: space-between;\n            align-items: center;\n            font-size: 0.85rem;\n            color: var(--text-muted);\n            margin-bottom: 8px;\n            gap: 8px;\n            flex-wrap: wrap;\n        }\n\n        .status-message.error {\n            color: var(--error);\n            font-weight: bold;\n        }\n\n        .table-wrapper {\n            width: 100%;\n            overflow-x: auto;\n            border-radius: 8px;\n            border: 1px solid var(--border);\n        }\n\n        table {\n            width: 100%;\n            border-collapse: collapse;\n            font-size: 0.9rem;\n            min-width: 700px;\n        }\n\n        thead {\n            background: #f0f2f5;\n        }\n\n        th,\n        td {\n            padding: 8px 10px;\n            text-align: left;\n            border-bottom: 1px solid #eee;\n        }\n\n        th {\n            font-weight: bold;\n            color: var(--text-muted);\n        }\n\n        tr:nth-child(even) {\n            background: #fafafa;\n        }\n\n        .col-datetime {\n            white-space: nowrap;\n            font-family: \"Consolas\", \"Roboto Mono\", monospace;\n            font-size: 0.85rem;\n        }\n\n        .badge-status {\n            padding: 2px 8px;\n            border-radius: 999px;\n            font-size: 0.8rem;\n            font-weight: bold;\n            text-transform: uppercase;\n        }\n\n        .badge-status.pending {\n            background: #fff3e0;\n            color: #e67e22;\n        }\n\n        .badge-status.sent {\n            background: #e8f5e9;\n            color: #2e7d32;\n        }\n\n        .badge-status.error {\n            background: #fdecea;\n            color: #c0392b;\n        }\n\n        .footer-note {\n            margin-top: 10px;\n            font-size: 0.8rem;\n            color: var(--text-muted);\n        }\n    </style>\n</head>\n\n<body>\n    <div class=\"container\">\n        <h1><span class=\"icon\">🎛️</span> Histórico de Comandos</h1>\n        <p class=\"subtitle\">\n            Visualize os comandos enviados para a planta, com status, valor e usuário responsável.\n        </p>\n\n        <div class=\"controls\">\n            <div>\n                <label for=\"filtroStatus\">Status:</label>\n                <select id=\"filtroStatus\">\n                <option value=\"\">Todos</option>\n                <option value=\"pending\">pending</option>\n                <option value=\"sent\">sent</option>\n            </select>\n            </div>\n            <div>\n                <label for=\"filtroTexto\">Filtro por comando / usuário / id:</label>\n                <input type=\"text\" id=\"filtroTexto\" placeholder=\"Ex: setpoint, 5, 1.23\">\n            </div>\n            <button id=\"btnReload\" type=\"button\">Atualizar agora</button>\n        </div>\n\n        <div class=\"status-bar\">\n            <span id=\"statusMessage\" class=\"status-message\">Carregando comandos...</span>\n            <span id=\"statusInfo\" class=\"status-info\"></span>\n        </div>\n\n        <div class=\"table-wrapper\">\n            <table>\n                <thead>\n                    <tr>\n                        <th>ID</th>\n                        <th>Comando</th>\n                        <th>Valor</th>\n                        <th>Status</th>\n                        <th>User ID</th>\n                        <th>Criado em</th>\n                    </tr>\n                </thead>\n                <tbody id=\"commandsTableBody\">\n                    <!-- Preenchido via JS -->\n                </tbody>\n            </table>\n        </div>\n\n        <p class=\"footer-note\">\n            Esta página consome a rota <code>GET /admin/commands</code>. Apenas usuários com perfil\n            <strong>admin</strong> têm acesso.\n        </p>\n    </div>\n\n    <script>\n        const filtroStatus  = document.getElementById('filtroStatus');\n    const filtroTexto   = document.getElementById('filtroTexto');\n    const btnReload     = document.getElementById('btnReload');\n    const statusMsg     = document.getElementById('statusMessage');\n    const statusInfo    = document.getElementById('statusInfo');\n    const tbody         = document.getElementById('commandsTableBody');\n\n    let todosCommands = [];\n\n    function formatDateTime(isoStr) {\n        if (!isoStr) return '-';\n        const d = new Date(isoStr);\n        if (isNaN(d.getTime())) return isoStr;\n        const pad = n => String(n).padStart(2, '0');\n        const dia  = pad(d.getDate());\n        const mes  = pad(d.getMonth() + 1);\n        const ano  = d.getFullYear();\n        const hora = pad(d.getHours());\n        const min  = pad(d.getMinutes());\n        const seg  = pad(d.getSeconds());\n        return `${dia}/${mes}/${ano} ${hora}:${min}:${seg}`;\n    }\n\n    function badgeStatus(status) {\n        const s = String(status || '').toLowerCase();\n        let classe = 'badge-status';\n        if (s === 'pending') classe += ' pending';\n        else if (s === 'sent') classe += ' sent';\n        else classe += ' error';\n        return `<span class=\"${classe}\">${s || '-'}</span>`;\n    }\n\n    function aplicarFiltros() {\n        const st = (filtroStatus.value || '').toLowerCase();\n        const txt = (filtroTexto.value || '').toLowerCase();\n\n        const filtrados = todosCommands.filter(c => {\n            const statusOK = !st || String(c.status || '').toLowerCase() === st;\n\n            const blob = [\n                c.command_name || '',\n                c.value != null ? String(c.value) : '',\n                c.user_id != null ? String(c.user_id) : '',\n                c.id != null ? String(c.id) : ''\n            ].join(' ').toLowerCase();\n\n            const textoOK = !txt || blob.includes(txt);\n\n            return statusOK && textoOK;\n        });\n\n        renderTabela(filtrados);\n        statusInfo.textContent = `${filtrados.length} de ${todosCommands.length} comandos exibidos`;\n    }\n\n    function renderTabela(lista) {\n        tbody.innerHTML = '';\n        if (!lista || lista.length === 0) {\n            tbody.innerHTML = '<tr><td colspan=\"6\" style=\"text-align:center; padding:10px; color:#888;\">Nenhum comando encontrado.</td></tr>';\n            return;\n        }\n        const linhas = lista.map(c => `\n            <tr>\n                <td>${c.id ?? '-'}</td>\n                <td>${c.command_name || '-'}</td>\n                <td>${c.value != null ? c.value : '-'}</td>\n                <td>${badgeStatus(c.status)}</td>\n                <td>${c.user_id ?? '-'}</td>\n                <td class=\"col-datetime\">${formatDateTime(c.created_at)}</td>\n            </tr>\n        `);\n        tbody.innerHTML = linhas.join('');\n    }\n\n    async function carregarCommands() {\n        statusMsg.textContent = 'Carregando comandos...';\n        statusMsg.classList.remove('error');\n\n        try {\n            const resp = await fetch('/admin/commands', { cache: 'no-store' });\n            if (!resp.ok) {\n                statusMsg.textContent = 'Erro ao carregar comandos (HTTP ' + resp.status + ')';\n                statusMsg.classList.add('error');\n                return;\n            }\n            const data = await resp.json();\n            if (!Array.isArray(data)) {\n                statusMsg.textContent = 'Formato inesperado de resposta de /admin/commands.';\n                statusMsg.classList.add('error');\n                return;\n            }\n\n            todosCommands = data;\n            statusMsg.textContent = 'Comandos atualizados com sucesso.';\n            statusMsg.classList.remove('error');\n\n            aplicarFiltros();\n        } catch (e) {\n            console.error(e);\n            statusMsg.textContent = 'Erro de conexão ao buscar /admin/commands.';\n            statusMsg.classList.add('error');\n        }\n    }\n\n    filtroStatus.addEventListener('change', aplicarFiltros);\n    filtroTexto.addEventListener('input', aplicarFiltros);\n    btnReload.addEventListener('click', carregarCommands);\n\n    carregarCommands();\n    setInterval(carregarCommands, 15000);\n    </script>\n</body>\n\n</html>",
+        "output": "str",
+        "x": 510,
+        "y": 1120,
+        "wires": [
+            [
+                "1128cb73507be0a5"
+            ]
+        ]
+    },
+    {
+        "id": "7439e8f938ea555a",
+        "type": "function",
+        "z": "f7652259b01f9ec1",
+        "name": "Checar Admin",
+        "func": "\nconst user = msg.req && msg.req.session && msg.req.session.user;\n\nif (!user) {\n    msg.statusCode = 401;\n    msg.payload = { ok:false, erro:\"Não autenticado\" };\n    return [null, msg];\n}\n\nif (user.role !== 'admin') {\n    msg.statusCode = 403;\n    msg.payload = { ok:false, erro:\"Acesso permitido apenas para administradores.\" };\n    return [null, msg];\n}\n\n// autorizado\nreturn [msg, null];",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 340,
+        "y": 1120,
+        "wires": [
+            [
+                "a655a5d47891c4b7"
+            ]
+        ]
+    },
+    {
+        "id": "1128cb73507be0a5",
+        "type": "http response",
+        "z": "f7652259b01f9ec1",
+        "name": "",
+        "statusCode": "",
+        "headers": {},
+        "x": 670,
+        "y": 1120,
+        "wires": []
+    },
+    {
+        "id": "cfc5e4f1f11a5874",
+        "type": "function",
+        "z": "f7652259b01f9ec1",
+        "name": "Log Login OK",
+        "func": "const req  = msg.req || {};\nconst user = (req.session && req.session.user) || {};\nconst ip   = (req.connection && req.connection.remoteAddress) || 'desconhecido';\n\nmsg.payload = {\n    tipo: \"INFO\",\n    desc: `Login bem-sucedido do usuário \"${user.username || 'desconhecido'}\".`,\n    ip: ip\n};\n\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1140,
+        "y": 1800,
+        "wires": [
+            [
+                "84e99011e86676ad"
+            ]
+        ]
+    },
+    {
+        "id": "84e99011e86676ad",
+        "type": "link out",
+        "z": "f7652259b01f9ec1",
+        "name": "link out 3",
+        "mode": "link",
+        "links": [
+            "8e697b900efdadc8"
+        ],
+        "x": 1275,
+        "y": 1800,
+        "wires": []
+    },
+    {
+        "id": "da03e2c5d78dfd99",
+        "type": "function",
+        "z": "f7652259b01f9ec1",
+        "name": "Log Login Falho",
+        "func": "const req   = msg.req || {};\n// Tente recuperar o que o usuário digitou (se ainda existir)\nconst body  = msg.req && msg.req.body ? msg.req.body : {};\nconst userX = body.username || '(desconhecido)';\nconst ip    = (req.connection && req.connection.remoteAddress) || 'desconhecido';\n\nmsg.payload = {\n    tipo: \"ERRO\",\n    desc: `Tentativa de login falhou para o usuário \"${userX}\".`,\n    ip: ip\n};\n\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1160,
+        "y": 1560,
+        "wires": [
+            [
+                "eec7557f65735e01"
+            ]
+        ]
+    },
+    {
+        "id": "eec7557f65735e01",
+        "type": "link out",
+        "z": "f7652259b01f9ec1",
+        "name": "link out 4",
+        "mode": "link",
+        "links": [
+            "8e697b900efdadc8"
+        ],
+        "x": 1295,
+        "y": 1560,
+        "wires": []
+    },
+    {
+        "id": "531180a6d1af7ecc",
+        "type": "function",
+        "z": "f7652259b01f9ec1",
+        "name": "Log Novo Usuário",
+        "func": "const req     = msg.req || {};\nconst admin   = req.session && req.session.user;\nconst ip      = (req.connection && req.connection.remoteAddress) || 'desconhecido';\nconst u       = msg.novoUsuario || {};\nconst novoUsr = u.username || '(sem username)';\nconst role    = u.role || 'user';\n\nconst adminName = admin && admin.username ? admin.username : '(admin desconhecido)';\n\nmsg.payload = {\n    tipo: \"INFO\",\n    desc: `Admin \"${adminName}\" cadastrou novo usuário \"${novoUsr}\" com perfil \"${role}\".`,\n    ip: ip\n};\n\nreturn msg;\n\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 2230,
+        "y": 960,
+        "wires": [
+            [
+                "fcc1aaadaf2b36ad"
+            ]
+        ]
+    },
+    {
+        "id": "fcc1aaadaf2b36ad",
+        "type": "link out",
+        "z": "f7652259b01f9ec1",
+        "name": "link out 5",
+        "mode": "link",
+        "links": [
+            "8e697b900efdadc8"
+        ],
+        "x": 2355,
+        "y": 960,
+        "wires": []
+    },
+    {
+        "id": "76553f679b52a39f",
+        "type": "function",
+        "z": "f7652259b01f9ec1",
+        "name": "Log Erro Cadastro Usuário",
+        "func": "// Resultado bruto do MySQL\nlet result = msg.payload;\n\n// Alguns drivers podem retornar array\nif (Array.isArray(result)) {\n    result = result[0];\n}\n\n// Verifica se o INSERT deu certo\nconst ok = result && (result.affectedRows === 1 || result.insertId);\n\n// Info pro log\nconst req = msg.req || {};\nconst ip =\n    (req.connection && req.connection.remoteAddress) ||\n    (req.socket && req.socket.remoteAddress) ||\n    \"desconhecido\";\n\nlet logMsg = { payload: {} };\n\nif (ok) {\n    // --- SUCESSO ---\n    msg.statusCode = 201;\n    msg.payload = {\n        ok: true,\n        mensagem: \"Usuário cadastrado com sucesso.\"\n    };\n\n    logMsg.payload = {\n        tipo: \"INFO\",\n        desc: \"Usuário cadastrado com sucesso.\",\n        ip: ip\n    };\n} else {\n    // --- FALHA REAL ---\n    msg.statusCode = 500;\n    msg.payload = {\n        ok: false,\n        erro: \"Falha ao cadastrar usuário.\"\n    };\n\n    logMsg.payload = {\n        tipo: \"ERRO\",\n        desc: \"Falha ao cadastrar usuário: motivo desconhecido\",\n        ip: ip\n    };\n}\n\n// saída 1 -> HTTP Resposta\n// saída 2 -> SALVAR LOG\nreturn [msg, logMsg];\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1120,
+        "y": 880,
+        "wires": [
+            [
+                "5523c08e38c1de39"
+            ]
+        ]
+    },
+    {
+        "id": "5523c08e38c1de39",
+        "type": "link out",
+        "z": "f7652259b01f9ec1",
+        "name": "link out 6",
+        "mode": "link",
+        "links": [
+            "8e697b900efdadc8"
+        ],
+        "x": 1295,
+        "y": 880,
+        "wires": []
+    },
+    {
+        "id": "c7dbf4bee5c498ae",
+        "type": "function",
+        "z": "f7652259b01f9ec1",
+        "name": "Log Setpoint",
+        "func": "const req  = msg.req || {};\nconst sess = req.session && req.session.user;\nconst ip   = (req.connection && req.connection.remoteAddress) || 'desconhecido';\n\n\nconst cmd  = msg.payloadOriginal || msg.payload || {};\nconst valor = cmd[1]?? '(sem valor)';\n\n\nconst username = (sess && sess.username) ? sess.username : '(usuário desconhecido)';\n\n\nmsg.payload = {\n    tipo: \"INFO\",\n    desc: `Usuário \"${username}\" enviou setpoint = ${valor}.`,\n    ip: ip\n};\n\n\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 490,
+        "y": 620,
+        "wires": [
+            [
+                "65fb11976e3b4c99"
+            ]
+        ]
+    },
+    {
+        "id": "65fb11976e3b4c99",
+        "type": "link out",
+        "z": "f7652259b01f9ec1",
+        "name": "link out 7",
+        "mode": "link",
+        "links": [
+            "8e697b900efdadc8"
+        ],
+        "x": 615,
+        "y": 620,
+        "wires": []
+    },
+    {
+        "id": "021f99e8568e1a35",
+        "type": "function",
+        "z": "f7652259b01f9ec1",
+        "name": "Log Erro MySQL",
+        "func": "const err = msg.error || {};\nconst detail = (err.message || err.toString || '').toString();\nmsg.statusCode = 500;\nmsg.payload = { ok:false, erro: \"Falha no banco de dados\", detalhe: detail };\nnode.status({fill:\"red\", shape:\"ring\", text: detail.slice(0,60)});\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 710,
+        "y": 320,
+        "wires": [
+            [
+                "c827a5c1d756d66e"
+            ]
+        ]
+    },
+    {
+        "id": "c827a5c1d756d66e",
+        "type": "link out",
+        "z": "f7652259b01f9ec1",
+        "name": "link out 8",
+        "mode": "link",
+        "links": [
+            "8e697b900efdadc8"
+        ],
+        "x": 825,
+        "y": 320,
+        "wires": []
+    },
+    {
+        "id": "867899ca7b33b591",
+        "type": "encrypt",
+        "z": "f7652259b01f9ec1",
+        "name": "",
+        "algorithm": "AES",
+        "key": "minha-chave-super-secreta-123",
+        "x": 680,
+        "y": 180,
+        "wires": [
+            [
+                "9a85da9ac5a17448"
+            ]
+        ]
+    },
+    {
+        "id": "c9aaf24dc491a0fa",
+        "type": "decrypt",
+        "z": "f7652259b01f9ec1",
+        "name": "",
+        "algorithm": "AES",
+        "key": "minha-chave-super-secreta-123",
+        "x": 660,
+        "y": 1460,
+        "wires": [
+            [
+                "50ece66f82fe9ef0"
+            ]
+        ]
+    },
+    {
+        "id": "60e41254013f4891",
+        "type": "split",
+        "z": "f7652259b01f9ec1",
+        "name": "",
+        "splt": "\\n",
+        "spltType": "str",
+        "arraySplt": 1,
+        "arraySpltType": "len",
+        "stream": false,
+        "addname": "",
+        "property": "payload",
+        "x": 1150,
+        "y": 440,
+        "wires": [
+            [
+                "767b4fa945e1f775"
+            ]
+        ]
+    },
+    {
+        "id": "767b4fa945e1f775",
+        "type": "function",
+        "z": "f7652259b01f9ec1",
+        "name": "Preparar p/ Decrypt",
+        "func": "// msg.payload contém o objeto da linha do MySQL\n// Ex: { id: 1, tanque_id: 2, value_encrypted: 'U2FsdGVkX1...', ts: '...' }\n\n// 1. FAZEMOS O BACKUP de todos os dados em uma nova propriedade\nmsg.dados_originais = msg.payload;\n\n// 2. ISOLAMOS apenas o valor que queremos descriptografar\nmsg.payload = msg.payload.value_encrypted;\n\n// O nó [decrypt] receberá SOMENTE o texto criptografado,\n// mas o msg manterá a propriedade 'dados_originais' intacta.\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1150,
+        "y": 500,
+        "wires": [
+            [
+                "5b140d6386f0b979"
+            ]
+        ]
+    },
+    {
+        "id": "ca196980711cee68",
+        "type": "function",
+        "z": "f7652259b01f9ec1",
+        "name": "Remontar Dados Limpos",
+        "func": "// 1. Pegamos o resultado da descriptografia\nvar dado_limpo = msg.payload;\n\n// 2. Pegamos o nosso backup\nvar dados_antigos = msg.dados_originais;\n\n// 3. Montamos o novo msg.payload limpo para o frontend\n// (Atenção: ajuste os nomes das propriedades 'tanque' e 'timestamp'\n// para corresponder ao que seu frontend espera)\n\n// --- Cenário A: Se você criptografou SÓ o NÚMERO (ex: 34.5) ---\nmsg.payload = {\n    tanque: dados_antigos.tanque_id,\n    nivel: dado_limpo, \n    timestamp: dados_antigos.ts\n};\n\n/*\n// --- Cenário B: Se você criptografou o OBJETO INTEIRO (ex: {\"nivel\": 34.5}) ---\nmsg.payload = {\n    tanque: dados_antigos.tanque_id,\n    nivel: dado_limpo.nivel, // <-- note a diferença\n    timestamp: dados_antigos.ts\n};\n*/\n\n// O nó [junta 3] receberá este objeto limpo.\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1490,
+        "y": 500,
+        "wires": [
+            [
+                "5994b1b7f2a2d63a"
+            ]
+        ]
+    },
+    {
+        "id": "5994b1b7f2a2d63a",
+        "type": "join",
+        "z": "f7652259b01f9ec1",
+        "name": "",
+        "mode": "custom",
+        "build": "array",
+        "property": "payload",
+        "propertyType": "msg",
+        "key": "topic",
+        "joiner": "\\n",
+        "joinerType": "str",
+        "useparts": false,
+        "accumulate": false,
+        "timeout": "10",
+        "count": "",
+        "reduceRight": false,
+        "reduceExp": "",
+        "reduceInit": "",
+        "reduceInitType": "num",
+        "reduceFixup": "",
+        "x": 1670,
+        "y": 500,
+        "wires": [
+            [
+                "02fb67e17e9746c1"
+            ]
+        ]
+    },
+    {
+        "id": "02fb67e17e9746c1",
+        "type": "http response",
+        "z": "f7652259b01f9ec1",
+        "name": "",
+        "statusCode": "",
+        "headers": {},
+        "x": 1790,
+        "y": 500,
+        "wires": []
+    },
+    {
+        "id": "5b140d6386f0b979",
+        "type": "decrypt",
+        "z": "f7652259b01f9ec1",
+        "name": "",
+        "algorithm": "AES",
+        "key": "minha-chave-super-secreta-123",
+        "x": 1300,
+        "y": 500,
+        "wires": [
+            [
+                "ca196980711cee68"
+            ]
+        ]
+    },
+    {
+        "id": "0ff6295f5fdca5a0",
+        "type": "mysql",
+        "z": "f7652259b01f9ec1",
+        "mydb": "cfg_mysql_local",
+        "name": "",
+        "x": 690,
+        "y": 740,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "283b8867de4d2f5a",
+        "type": "function",
+        "z": "f7652259b01f9ec1",
+        "name": "function 5",
+        "func": "// --- Configuração ---\n// 1. Coloque sua chave secreta aqui\n// IMPORTANTE: Idealmente, use 'global.get(\"minha_chave\")'\n// para não deixar a chave exposta no código.\nconst SECRET_KEY = \"minha-chave-super-secreta-123\"; \n// --------------------\n\n\n// 1. Carrega a biblioteca que habilitamos no settings.js\nconst CryptoJS = global.get('cryptojs');\n\n// 2. Pega o array de dados vindo do banco\nconst linhas = msg.payload;\n\n// 3. Verifica se realmente recebemos um array\nif (!Array.isArray(linhas)) {\n    node.warn(\"Payload não é um array, pulando.\");\n    return msg;\n}\n\n// 4. Percorre cada linha do resultado\nfor (let i = 0; i < linhas.length; i++) {\n    let linha_atual = linhas[i];\n\n    // 5. Verifica se a linha tem o campo 'nivel'\n    if (linha_atual.nivel && typeof linha_atual.nivel === 'string') {\n        \n        try {\n            // 6. Tenta descriptografar o campo 'nivel'\n            const bytes = CryptoJS.AES.decrypt(linha_atual.nivel, SECRET_KEY);\n            \n            // 7. Converte o resultado para texto (UTF-8)\n            const nivel_legivel = bytes.toString(CryptoJS.enc.Utf8);\n\n            // 8. Se a descriptografia falhar (chave errada?),\n            // 'toString' retorna uma string vazia.\n            if (nivel_legivel) {\n                \n                // Sucesso! Vamos substituir o valor no objeto.\n                // Tenta converter para número, já que 'nivel' parece ser numérico\n                const nivel_numerico = parseFloat(nivel_legivel);\n                \n                linha_atual.nivel = isNaN(nivel_numerico) ? nivel_legivel : nivel_numerico;\n                \n            } else {\n                // Falha na descriptografia (ex: chave errada)\n                node.warn(\"Falha ao descriptografar 'nivel' (chave errada?). ID: \" + linha_atual.tanque_id);\n                linha_atual.nivel = null; // ou \"ERRO_DECRYPT\"\n            }\n\n        } catch (e) {\n            // Erro (ex: dado mal formatado)\n            node.error(\"Erro ao descriptografar: \" + e.message, msg);\n            linha_atual.nivel = null; // Informa que falhou\n        }\n    }\n}\n\n// 9. Retorna o 'msg' com o payload (array) agora modificado\nmsg.payload = linhas;\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 900,
+        "y": 480,
+        "wires": [
+            [
+                "ceefa446a31fd002"
+            ]
+        ]
+    },
+    {
+        "id": "f4b5af7225d6b1ca",
+        "type": "debug",
+        "z": "f7652259b01f9ec1",
+        "name": "debug 2",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 760,
+        "y": 560,
+        "wires": []
+    },
+    {
+        "id": "cfg_mysql_local",
+        "type": "MySQLdatabase",
+        "name": "MySQL_Localhost",
+        "host": "localhost",
+        "port": "3306",
+        "db": "scom",
+        "tz": "",
+        "charset": "UTF8"
+    },
+    {
+        "id": "7d18cc89b54574f0",
+        "type": "ui_group",
+        "name": "Tanque 1",
+        "tab": "66363173654f2c2c",
+        "order": 1,
+        "width": "6"
+    },
+    {
+        "id": "356fb96dad4e0705",
+        "type": "ui_group",
+        "name": "Tanque 3",
+        "tab": "66363173654f2c2c",
+        "order": 2,
+        "width": "6"
+    },
+    {
+        "id": "66363173654f2c2c",
+        "type": "ui_tab",
+        "name": "Painel Tanques",
+        "icon": "dashboard"
+    },
+    {
+        "id": "42146c698412f093",
+        "type": "global-config",
+        "env": [],
+        "modules": {
+            "node-red-node-mysql": "2.0.0",
+            "node-red-contrib-bcrypt": "0.1.6",
+            "node-red-dashboard": "3.6.6",
+            "node-red-contrib-crypto-js": "0.1.1"
+        }
+    }
+]

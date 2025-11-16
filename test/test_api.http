@@ -1,0 +1,14 @@
+### Envio de medicoes simuladas
+POST http://localhost:1880/api/medicoes
+Content-Type: application/json
+x-api-key: minha-chave-secreta-123
+
+[
+  { "tanque": 1, "nivel": 32.5, "ts": "2025-11-15 19:45:00" },
+  { "tanque": 2, "nivel": 40.2, "ts": "2025-11-15 19:45:00" },
+  { "tanque": 3, "nivel": 28.9, "ts": "2025-11-15 19:45:00" }
+]
+
+### Consulta de comandos pendentes
+GET http://localhost:1880/api/commands
+x-api-key: minha-chave-secreta-123
